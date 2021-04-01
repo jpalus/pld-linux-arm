@@ -27,6 +27,13 @@ run_log_priv() {
   run_log "$msg" $SUDO "$@"
 }
 
+:
+ARCH=${ARCH:-$(rpm -E '%{_host_cpu}')}
+
+if [ $? -ne 0 ] || [ -z "$ARCH" ]; then
+  error 'failed to determine arch'
+fi
+
 if [ "$EUID" != "0" ]; then
   echo "Non-root user detected, using sudo"
   SUDO="sudo"
@@ -35,7 +42,7 @@ fi
 
 SCRIPT_DIR=$(dirname $(readlink -f "$0"))
 TIMESTAMP=$(date +%Y%m%d)
-RELEASE_NAME="pld-linux-base-aarch64-$TIMESTAMP"
+RELEASE_NAME="pld-linux-base-$ARCH-$TIMESTAMP"
 LOG_FILE="$SCRIPT_DIR/$RELEASE_NAME.log"
 echo "Creating release $RELEASE_NAME"
 
@@ -49,7 +56,7 @@ echo "Logging to $LOG_FILE"
 
 run_log_priv "Setting up temporary chroot in $CHROOT_DIR" rpm --initdb --root "$CHROOT_DIR"
 run_log_priv "Installing packages from $SCRIPT_DIR/base.pkgs" poldek -iv --pset="$SCRIPT_DIR/base.pkgs" --root="$CHROOT_DIR" --noask
-run_log_priv "Adjusting poldek repository configuration" sed -i -e '/^_prefix = / a _aarch64_prefix = http://jpalus.fastmail.com.user.fm/dists/th' -e 's|%{_prefix}/PLD/%{_arch}/RPMS|%{_aarch64_prefix}/PLD/%{_arch}/RPMS|' "$CHROOT_DIR/etc/poldek/repos.d/pld.conf"
+run_log_priv "Adjusting poldek repository configuration" sed -i -e "/^_prefix = / a _${ARCH}_prefix = http://jpalus.fastmail.com.user.fm/dists/th" -e "s|%{_prefix}/PLD/%{_arch}/RPMS|%{_${ARCH}_prefix}/PLD/%{_arch}/RPMS|" "$CHROOT_DIR/etc/poldek/repos.d/pld.conf"
 rpm --root="$CHROOT_DIR" -qa|sort > "$SCRIPT_DIR/$RELEASE_NAME.packages"
 run_log_priv "Creating archive $SCRIPT_DIR/$RELEASE_NAME.tar.xz" tar -Jcpf "$SCRIPT_DIR/$RELEASE_NAME.tar.xz" -C "$CHROOT_DIR" .
 
