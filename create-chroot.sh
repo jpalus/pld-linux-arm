@@ -56,7 +56,13 @@ echo "Logging to $LOG_FILE"
 
 run_log_priv "Setting up temporary chroot in $CHROOT_DIR" rpm --initdb --root "$CHROOT_DIR"
 run_log_priv "Installing packages from $SCRIPT_DIR/base.pkgs" poldek -iv --pset="$SCRIPT_DIR/base.pkgs" --root="$CHROOT_DIR" --noask --pmopt='--define=_tmppath\ /tmp'
-run_log_priv "Adjusting poldek repository configuration" sed -i -e "/^_prefix = / a _${ARCH}_prefix = http://jpalus.fastmail.com.user.fm/dists/th" -e "s|%{_prefix}/PLD/%{_arch}/RPMS|%{_${ARCH}_prefix}/PLD/%{_arch}/RPMS|" "$CHROOT_DIR/etc/poldek/repos.d/pld.conf"
+run_log_priv "Disabling default poldek repository configuration for $ARCH" sed -i -e "/^path.*=.*%{_prefix}\/PLD\/%{_arch}\/RPMS/ a auto = no\\nautoup = no" "$CHROOT_DIR/etc/poldek/repos.d/pld.conf"
+cat <<EOF | run_log_priv "Configuring custom $ARCH repository" sponge "$CHROOT_DIR/etc/poldek/repos.d/jpalus.conf"
+[source]
+type = pndir
+name = jpalus
+path = http://jpalus.fastmail.com.user.fm/dists/th/PLD/$ARCH/RPMS/
+EOF
 rpm --root="$CHROOT_DIR" -qa|sort > "$SCRIPT_DIR/$RELEASE_NAME.packages"
 run_log_priv "Creating archive $SCRIPT_DIR/$RELEASE_NAME.tar.xz" tar -Jcpf "$SCRIPT_DIR/$RELEASE_NAME.tar.xz" -C "$CHROOT_DIR" .
 
