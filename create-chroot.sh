@@ -44,6 +44,7 @@ SCRIPT_DIR=$(dirname $(readlink -f "$0"))
 TIMESTAMP=$(date +%Y%m%d)
 RELEASE_NAME="pld-linux-base-$ARCH-$TIMESTAMP"
 LOG_FILE="$SCRIPT_DIR/$RELEASE_NAME.log"
+DOCKER_TAG="jpalus/pld-linux-$ARCH:$TIMESTAMP"
 echo "Creating release $RELEASE_NAME"
 
 CHROOT_DIR="$(mktemp -t -d $RELEASE_NAME.XXXXXXXXXX)"
@@ -75,3 +76,5 @@ fi
 
 run_log 'Signing' gpg --sign --armor --detach-sig "$SCRIPT_DIR/$RELEASE_NAME.tar.xz"
 run_log_priv 'Cleaning up' rm -rf "$CHROOT_DIR"
+run_log "Importing docker image $DOCKER_TAG" podman import "$SCRIPT_DIR/$RELEASE_NAME.tar.xz" $DOCKER_TAG
+run_log "Pushing docker image $DOCKER_TAG" podman push $DOCKER_TAG
