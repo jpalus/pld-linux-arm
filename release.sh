@@ -28,7 +28,7 @@ run_log() {
 }
 
 run_log_priv() {
-  if [ "$EUID" != "0" ] && [ -z "$SUDO" ]; then
+  if [ "$(id -u)" != "0" ] && [ -z "$SUDO" ]; then
     echo "Non-root user detected, using sudo"
     SUDO="sudo"
   fi
@@ -74,8 +74,8 @@ EOF
   rpm --root="$CHROOT_DIR" -qa|sort > "$SCRIPT_DIR/$RELEASE_NAME.packages"
   run_log_priv "Creating archive $SCRIPT_DIR/$RELEASE_NAME.tar.xz" tar -Jcpf "$SCRIPT_DIR/$RELEASE_NAME.tar.xz" -C "$CHROOT_DIR" .
 
-  if [ "$EUID" != "0" ]; then
-    run_log_priv "Changing ownership of $RELEASE_NAME.tar.xz" chown $USER "$SCRIPT_DIR/$RELEASE_NAME.tar.xz"
+  if [ "$(id -u)" != "0" ]; then
+    run_log_priv "Changing ownership of $RELEASE_NAME.tar.xz" chown $(id -u -n) "$SCRIPT_DIR/$RELEASE_NAME.tar.xz"
   fi
 
   run_log_priv 'Cleaning up' rm -rf "$CHROOT_DIR"
