@@ -117,10 +117,12 @@ case "$1" in
         $1_$2
         ;;
       *)
+        ACTION=unknown
         error "Unknown publish target: $2"
         ;;
     esac
     ;;
   *)
+    ACTION=unknown
     error "Unknown action: $1"
 esac
