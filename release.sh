@@ -50,6 +50,7 @@ fi
 SCRIPT_DIR=$(dirname $(readlink -f "$0"))
 TIMESTAMP=$(date +%Y%m%d)
 RELEASE_NAME="pld-linux-base-$ARCH-$TIMESTAMP"
+DOCKER_REGISTRY=docker.io
 DOCKER_REPO="jpalus/pld-linux-$ARCH"
 DOCKER_TAG="$DOCKER_REPO:$TIMESTAMP"
 DOCKER_TAG_LATEST="$DOCKER_REPO:latest"
@@ -99,10 +100,10 @@ publish_dockerhub() {
     error "$SCRIPT_DIR/$RELEASE_NAME.tar.xz does not exist"
   fi
   echo "Publishing release $RELEASE_NAME to Docker Hub"
-  run_log "Importing docker image $DOCKER_TAG" podman import "$SCRIPT_DIR/$RELEASE_NAME.tar.xz" $DOCKER_TAG
-  run_log "Tagging docker image $DOCKER_TAG as latest" podman tag $DOCKER_TAG $DOCKER_TAG_LATEST
-  run_log "Pushing docker tag $DOCKER_TAG" podman push $DOCKER_TAG
-  run_log "Pushing docker tag $DOCKER_TAG_LATEST" podman push $DOCKER_TAG_LATEST
+  run_log "Importing docker image $DOCKER_TAG" podman import "$SCRIPT_DIR/$RELEASE_NAME.tar.xz" $DOCKER_REGISTRY/$DOCKER_TAG
+  run_log "Tagging docker image $DOCKER_TAG as latest" podman tag $DOCKER_REGISTRY/$DOCKER_TAG $DOCKER_REGISTRY/$DOCKER_TAG_LATEST
+  run_log "Pushing docker tag $DOCKER_TAG" podman push $DOCKER_REGISTRY/$DOCKER_TAG
+  run_log "Pushing docker tag $DOCKER_TAG_LATEST" podman push $DOCKER_REGISTRY/$DOCKER_TAG_LATEST
 }
 
 case "$1" in
