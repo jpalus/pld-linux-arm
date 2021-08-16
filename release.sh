@@ -28,6 +28,10 @@ run_log() {
 }
 
 run_log_priv() {
+  if [ "$EUID" != "0" ] && [ -z "$SUDO" ]; then
+    echo "Non-root user detected, using sudo"
+    SUDO="sudo"
+  fi
   local msg="$1"; shift
   run_log "$msg" $SUDO "$@"
 }
@@ -36,11 +40,6 @@ ARCH=${ARCH:-$(rpm -E %{_host_cpu})}
 
 if [ $? -ne 0 ] || [ -z "$ARCH" ]; then
   error 'failed to determine arch'
-fi
-
-if [ "$EUID" != "0" ]; then
-  echo "Non-root user detected, using sudo"
-  SUDO="sudo"
 fi
 
 SCRIPT_DIR=$(dirname $(readlink -f "$0"))
