@@ -1,15 +1,20 @@
 #!/bin/sh
 
-log() {
+setup_log_file() {
   if [ -z "$LOG_FILE" ]; then
     LOG_FILE="$SCRIPT_DIR/$RELEASE_NAME-$ACTION.log"
     : > "$LOG_FILE"
     echo "Logging to $LOG_FILE"
   fi
+}
+
+log() {
+  setup_log_file
   echo "$@" >> "$LOG_FILE"
 }
 
 error() {
+  setup_log_file
   echo "ERROR: $*" | tee -a "$LOG_FILE" >&2
   exit 1
 }
