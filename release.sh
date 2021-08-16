@@ -81,10 +81,18 @@ EOF
 }
 
 sign() {
+  if [ ! -f "$SCRIPT_DIR/$RELEASE_NAME.tar.xz" ]; then
+    error "$SCRIPT_DIR/$RELEASE_NAME.tar.xz does not exist"
+  fi
+  echo "Signing release $RELEASE_NAME"
   run_log 'Signing' gpg --sign --armor --detach-sig "$SCRIPT_DIR/$RELEASE_NAME.tar.xz"
 }
 
 publish_dockerhub() {
+  if [ ! -f "$SCRIPT_DIR/$RELEASE_NAME.tar.xz" ]; then
+    error "$SCRIPT_DIR/$RELEASE_NAME.tar.xz does not exist"
+  fi
+  echo "Publishing release $RELEASE_NAME to Docker Hub"
   run_log "Importing docker image $DOCKER_TAG" podman import "$SCRIPT_DIR/$RELEASE_NAME.tar.xz" $DOCKER_TAG
   run_log "Tagging docker image $DOCKER_TAG as latest" podman tag $DOCKER_TAG $DOCKER_TAG_LATEST
   run_log "Pushing docker tag $DOCKER_TAG" podman push $DOCKER_TAG
