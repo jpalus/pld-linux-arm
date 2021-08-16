@@ -59,7 +59,9 @@ create() {
 
   run_log_priv "Setting up temporary chroot in $CHROOT_DIR" rpm --initdb --root "$CHROOT_DIR"
   run_log_priv "Installing packages from $SCRIPT_DIR/base.pkgs" poldek -iv --pset="$SCRIPT_DIR/base.pkgs" --root="$CHROOT_DIR" --noask --pmopt='--define=_tmppath\ /tmp'
-  run_log "Preparing public key" gpg --output jpalus.asc --armor --export 'Jan Palus'
+  if [ ! -f jpalus.asc ]; then
+    run_log "Preparing public key" gpg --output jpalus.asc --armor --export 'Jan Palus'
+  fi
   run_log_priv "Importing public key" rpm --root="$CHROOT_DIR" --import jpalus.asc
   run_log_priv "Disabling default poldek repository configuration for $ARCH" sed -i -e "/^path.*=.*%{_prefix}\/PLD\/%{_arch}\/RPMS/ a auto = no\\nautoup = no" "$CHROOT_DIR/etc/poldek/repos.d/pld.conf"
   cat <<EOF | run_log_priv "Configuring custom $ARCH repository" sponge "$CHROOT_DIR/etc/poldek/repos.d/jpalus.conf"
