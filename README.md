@@ -6,6 +6,7 @@ Tested as primary OS on following devices:
 
 * armv7hnl port
   * *Raspberry Pi 2*
+  * *Turris Omnia*
 
 * armv6hl port
   * *Raspberry Pi Zero W*
