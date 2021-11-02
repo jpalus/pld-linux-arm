@@ -70,7 +70,7 @@ create() {
   fi
   run_log_priv "Importing public key" rpm --root="$CHROOT_DIR" --import jpalus.asc
   run_log_priv "Disabling default poldek repository configuration for $ARCH" sed -i -e "/^path.*=.*%{_prefix}\/PLD\/%{_arch}\/RPMS/ a auto = no\\nautoup = no" "$CHROOT_DIR/etc/poldek/repos.d/pld.conf"
-  cat <<EOF | run_log_priv "Configuring custom $ARCH repository" sponge "$CHROOT_DIR/etc/poldek/repos.d/jpalus.conf"
+  run_log_priv "Configuring custom $ARCH repository" tee "$CHROOT_DIR/etc/poldek/repos.d/jpalus.conf" <<EOF
 [source]
 type = pndir
 name = jpalus
