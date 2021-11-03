@@ -3,6 +3,7 @@ chroots with unofficial port of [PLD Linux](https://www.pld-linux.org) to **armv
 Tested as primary OS on following devices:
 * aarch64 port
   * *Pinebook Pro*
+  * *Odroid N2+*
 
 * armv7hnl port
   * *Raspberry Pi 2*
