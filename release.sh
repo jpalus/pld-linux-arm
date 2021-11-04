@@ -164,6 +164,7 @@ EOF
     run_log_priv "Configuring uboot for Raspberry Pi Zero W" tee -a "$IMAGE_RPI_MOUNT_DIR/boot/firmware/config.txt" <<EOF
 [pi0w]
 kernel=uboot-rpi_0_w.bin
+enable_uart=1
 EOF
   fi
   if echo "$ARCH" | grep -q 'armv[67]'; then
