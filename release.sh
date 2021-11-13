@@ -1,5 +1,9 @@
 #!/bin/sh
 
+poldek_install() {
+  poldek -iv --noask --pmopt='--define=_excludedocs\ 1' --pmopt='--define=_install_langs\ %{nil}' "$@"
+}
+
 setup_log_file() {
   if [ -z "$LOG_FILE" ]; then
     LOG_FILE="$SCRIPT_DIR/$RELEASE_NAME-$ACTION.log"
@@ -64,7 +68,7 @@ create() {
   fi
 
   run_log_priv "Setting up temporary chroot in $CHROOT_DIR" rpm --initdb --root "$CHROOT_DIR"
-  run_log_priv "Installing packages from $SCRIPT_DIR/base.pkgs" poldek -iv --pset="$SCRIPT_DIR/base.pkgs" --root="$CHROOT_DIR" --noask --pmopt='--define=_tmppath\ /tmp'
+  run_log_priv "Installing packages from $SCRIPT_DIR/base.pkgs" poldek_install --pset="$SCRIPT_DIR/base.pkgs" --root="$CHROOT_DIR" --pmopt='--define=_tmppath\ /tmp'
   if [ ! -f jpalus.asc ]; then
     run_log "Preparing public key" gpg --output jpalus.asc --armor --export 'Jan Palus'
   fi
@@ -158,7 +162,7 @@ LABEL=PLD_ROOT / ext4 defaults 0 0
 LABEL=RPI_FW /boot/firmware vfat defaults 0 0
 EOF
   echo -e 'pld\npld' | run_log_priv "Setting root password" chroot "$IMAGE_RPI_MOUNT_DIR" passwd
-  run_log_priv "Installing uboot" chroot "$IMAGE_RPI_MOUNT_DIR" poldek -iv --noask $(echo "$ARCH" | grep -q armv6 && echo uboot-image-raspberry-pi-zero) $(echo "$ARCH" | grep -q 'armv[67]' && echo uboot-image-raspberry-pi-2)
+  run_log_priv "Installing uboot" chroot "$IMAGE_RPI_MOUNT_DIR" poldek_install $(echo "$ARCH" | grep -q armv6 && echo uboot-image-raspberry-pi-zero) $(echo "$ARCH" | grep -q 'armv[67]' && echo uboot-image-raspberry-pi-2)
   if echo "$ARCH" | grep -q armv6; then
     run_log_priv "Copying uboot image for Raspberry Pi Zero W" cp "$IMAGE_RPI_MOUNT_DIR/usr/share/uboot/rpi_0_w/u-boot.bin" "$IMAGE_RPI_MOUNT_DIR/boot/firmware/uboot-rpi_0_w.bin"
     run_log_priv "Configuring uboot for Raspberry Pi Zero W" tee -a "$IMAGE_RPI_MOUNT_DIR/boot/firmware/config.txt" <<EOF
@@ -187,15 +191,15 @@ label PLD
   initrd /boot/initrd
   fdtdir /boot/dtb
 EOF
-  run_log_priv "Installing geninitrd" chroot "$IMAGE_RPI_MOUNT_DIR" poldek -n jpalus -n th -iv --noask geninitrd
+  run_log_priv "Installing geninitrd" chroot "$IMAGE_RPI_MOUNT_DIR" poldek_install -n jpalus -n th geninitrd
   run_log_priv "Configuring additional kernel modules in initrd" sed -i 's/^#PREMODS.*/PREMODS="clk-raspberrypi bcm2835-dma pwm-bcm2835 i2c-bcm2835 bcm2835 mmc-block bcm2835-rng"/' "$IMAGE_RPI_MOUNT_DIR/etc/sysconfig/geninitrd"
   run_log_priv "Use lz4 compression for initrd" sed -i 's/^#COMPRESS.*/COMPRESS=lz4/' "$IMAGE_RPI_MOUNT_DIR/etc/sysconfig/geninitrd"
   run_log_priv "Use modprobe in initrd" tee -a "$IMAGE_RPI_MOUNT_DIR/etc/sysconfig/geninitrd" <<EOF
 USE_MODPROBE=yes
 EOF
-  run_log_priv "Installing raspberrypi-firmware" chroot "$IMAGE_RPI_MOUNT_DIR" poldek -iv --noask raspberrypi-firmware
-  run_log_priv "Installing kernel" chroot "$IMAGE_RPI_MOUNT_DIR" poldek -iv --noask kernel kernel-drm kernel-sound-alsa
-  run_log_priv "Installing rng-tools systemd-networkd wireless-regdb" chroot "$IMAGE_RPI_MOUNT_DIR" poldek -uv --noask rng-tools systemd-networkd wireless-regdb
+  run_log_priv "Installing raspberrypi-firmware" chroot "$IMAGE_RPI_MOUNT_DIR" poldek_install raspberrypi-firmware
+  run_log_priv "Installing kernel" chroot "$IMAGE_RPI_MOUNT_DIR" poldek_install kernel kernel-drm kernel-sound-alsa
+  run_log_priv "Installing rng-tools systemd-networkd wireless-regdb" chroot "$IMAGE_RPI_MOUNT_DIR" poldek_install rng-tools systemd-networkd wireless-regdb
   run_log_priv "Configuring rng-tools" sed -i 's/^#RNGD_OPTIONS=.*/RNGD_OPTIONS=" -x jitter -x pkcs11 -x rtlsdr "/' "$IMAGE_RPI_MOUNT_DIR/etc/sysconfig/rngd"
   run_log_priv "Enabling networkd link handling" rm "$IMAGE_RPI_MOUNT_DIR/etc/udev/rules.d/80-net-setup-link.rules"
   run_log_priv "Cleaning up poldek cache" rm -rf "$IMAGE_RPI_MOUNT_DIR/root/.poldek-cache"
