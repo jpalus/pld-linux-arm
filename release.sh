@@ -198,7 +198,7 @@ EOF
 USE_MODPROBE=yes
 EOF
   run_log_priv "Installing raspberrypi-firmware" chroot "$IMAGE_RPI_MOUNT_DIR" poldek_install raspberrypi-firmware
-  run_log_priv "Installing kernel" chroot "$IMAGE_RPI_MOUNT_DIR" poldek_install kernel kernel-drm kernel-sound-alsa
+  run_log_priv "Installing linux-firmware-broadcom kernel" chroot "$IMAGE_RPI_MOUNT_DIR" poldek_install linux-firmware-broadcom kernel kernel-drm kernel-sound-alsa
   run_log_priv "Installing rng-tools systemd-networkd wireless-regdb" chroot "$IMAGE_RPI_MOUNT_DIR" poldek_install rng-tools systemd-networkd wireless-regdb
   run_log_priv "Configuring rng-tools" sed -i 's/^#RNGD_OPTIONS=.*/RNGD_OPTIONS=" -x jitter -x pkcs11 -x rtlsdr "/' "$IMAGE_RPI_MOUNT_DIR/etc/sysconfig/rngd"
   run_log_priv "Enabling networkd link handling" rm "$IMAGE_RPI_MOUNT_DIR/etc/udev/rules.d/80-net-setup-link.rules"
