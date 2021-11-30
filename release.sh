@@ -129,25 +129,15 @@ publish_dockerhub() {
   run_log "Pushing docker tag $DOCKER_TAG_LATEST" podman push $DOCKER_REGISTRY/$DOCKER_TAG_LATEST
 }
 
-_wait_for_mount() {
-  echo waiting for $1
-  while fuser -vm "$1"; do
-    sleep 1
-  done
-}
-
 image_unmount_fs() {
   if [ -n "$IMAGE_MOUNT_DIR" ] && [ -d "$IMAGE_MOUNT_DIR" ]; then
     if [ -d "$IMAGE_MOUNT_DIR/boot/firmware" ] && mountpoint -q "$IMAGE_MOUNT_DIR/boot/firmware"; then
-      _wait_for_mount "$IMAGE_MOUNT_DIR/boot/firmware"
       run_log_priv "Unmounting boot firmware partition" umount "$IMAGE_MOUNT_DIR/boot/firmware"
     fi
     if [ -d "$IMAGE_MOUNT_DIR/boot" ] && mountpoint -q "$IMAGE_MOUNT_DIR/boot"; then
-      _wait_for_mount "$IMAGE_MOUNT_DIR/boot"
       run_log_priv "Unmounting boot partition" umount "$IMAGE_MOUNT_DIR/boot"
     fi
     if mountpoint -q "$IMAGE_MOUNT_DIR"; then
-      _wait_for_mount "$IMAGE_MOUNT_DIR"
       run_log_priv "Unmounting PLD root partition" umount "$IMAGE_MOUNT_DIR"
     fi
   fi
