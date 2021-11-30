@@ -330,6 +330,21 @@ image_install_board_pkgs_rpi() {
   run_log_priv "Configuring rng-tools" sed -i 's/^#RNGD_OPTIONS=.*/RNGD_OPTIONS=" -x jitter -x pkcs11 -x rtlsdr "/' "$IMAGE_MOUNT_DIR/etc/sysconfig/rngd"
 }
 
+image_setup_params_odroid_n2() {
+  IMAGE_TYPE=odroid_n2
+  IMAGE_NAME=odroid-n2
+  IMAGE_DESC="Odroid N2/N2+"
+  IMAGE_BOOT_PARAMS="earlycon"
+  IMAGE_INITRD_MODULES="fixed pwm-regulator gpio-regulator rtc_pcf8563 g12a pwm-meson reset-meson clk-cpu-dyndiv clk-dualdiv clk-mpll clk-phase clk-pll clk-regmap g12a-aoclk meson-aoclk meson-eeclk sclk-div meson_sm i2c-meson meson_saradc pinctrl-meson-axg-pmx pwrseq_emmc meson-gx-mmc meson-mx-sdio pinctrl-meson-g12a meson-canvas meson-clk-measure meson-ee-pwrc meson-gx-pwrc-vpu meson-secure-pwrc mmc-block "
+  IMAGE_DISPLAY_ENABLED=1
+  IMAGE_SOUND_ENABLED=1
+}
+
+image_install_bootloader_odroid_n2() {
+  poldek_install "Installing uboot" --root "$IMAGE_MOUNT_DIR" uboot-image-odroid-n2
+  run_log_priv "Writing uboot image" dd if="$IMAGE_MOUNT_DIR/usr/share/uboot/odroid-n2/u-boot.bin" of="$IMAGE_LO_DEVICE" bs=512 seek=1 conv=notrunc,fsync
+}
+
 image_create() {
   if [ ! -f "$SCRIPT_DIR/$RELEASE_NAME.tar.xz" ]; then
     error "$SCRIPT_DIR/$RELEASE_NAME.tar.xz does not exist"
@@ -398,9 +413,9 @@ case "$1" in
       create|sign)
         IMAGE_SIZE_MB=2048
         case "$3" in
-          rpi)
+          rpi|odroid-n2)
             ACTION=$1-$2-$3
-            eval image_setup_params_$3
+            eval image_setup_params_$(echo $3|tr - _)
             $1_$2
             ;;
           *)
