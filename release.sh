@@ -376,7 +376,7 @@ image_create() {
   poldek_install "Installing kernel" --root "$IMAGE_MOUNT_DIR" $KERNEL_PKGS
   poldek_install "Installing systemd-networkd" --root "$IMAGE_MOUNT_DIR" systemd-networkd
   if is_on "$IMAGE_WIFI_ENABLED"; then
-    poldek_install "Installing wireless-regdb" --root "$IMAGE_MOUNT_DIR" wireless-regdb
+    poldek_install "Installing iwd wireless-regdb" --root "$IMAGE_MOUNT_DIR" iwd wireless-regdb
   fi
   run_log_priv "Enabling networkd link handling" rm "$IMAGE_MOUNT_DIR/etc/udev/rules.d/80-net-setup-link.rules"
   run_log_priv "Cleaning up poldek cache" rm -rf "$IMAGE_MOUNT_DIR/root/.poldek-cache"
