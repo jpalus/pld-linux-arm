@@ -250,12 +250,21 @@ image_install_bootloader() {
 image_setup_bootloader() {
   run_log_priv "Creating /boot/extlinux directory" install -d "$IMAGE_MOUNT_DIR/boot/extlinux"
   run_log_priv "Configuring uboot extlinux entry" tee -a "$IMAGE_MOUNT_DIR/boot/extlinux/extlinux.conf" <<EOF
+menu title PLD Boot Menu
+default PLD
+timeout 20
 label PLD
   menu label PLD
   kernel /boot/vmlinuz
   append root=$(_part_id $IMAGE_ROOT_DEVICE) rw $IMAGE_BOOT_PARAMS
   initrd /boot/initrd
   fdtdir /boot/dtb
+label PLD.old
+  menu label PLD.old
+  kernel /boot/vmlinuz.old
+  append root=$(_part_id $IMAGE_ROOT_DEVICE) rw $IMAGE_BOOT_PARAMS
+  initrd /boot/initrd.old
+  fdtdir /boot/dtb.old
 EOF
 }
 
