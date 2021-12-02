@@ -18,7 +18,7 @@ Bootable images:
 
 **Raspberry Pi**
 * `raspberry-pi-pld-linux-base-armv6hl` bootable on Raspberry Pi Zero W and Raspberry Pi 2, `raspberry-pi-pld-linux-base-armv7hnl` bootable on Raspberry Pi 2
-* requires at least 2GB of storage
+* requires at least 1GB of storage
 * write image to SD card ie:
 ```
 xz -dc raspberry-pi-pld-linux-base-armv7hnl-20211102.img.xz | dd of=/dev/mmcblk1 bs=4M

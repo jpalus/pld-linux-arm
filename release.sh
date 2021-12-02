@@ -420,7 +420,7 @@ case "$1" in
   image)
     case "$2" in
       create|sign)
-        IMAGE_SIZE_MB=2048
+        IMAGE_SIZE_MB=1024
         case "$3" in
           rpi|odroid-n2)
             ACTION=$1-$2-$3
