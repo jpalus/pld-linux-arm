@@ -24,3 +24,11 @@ Bootable images:
 xz -dc raspberry-pi-pld-linux-base-armv7hnl-20211102.img.xz | dd of=/dev/mmcblk1 bs=4M
 ```
 * root password: *pld*
+
+**Odroid N2/N2+**
+* requires at least 1GB of storage
+* write image to SD card ie:
+```
+xz -dc odroid-n2-pld-linux-base-aarch64-20211202.img.xz | dd of=/dev/mmcblk1 bs=4M
+```
+* root password: *pld*
