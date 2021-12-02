@@ -392,7 +392,7 @@ image_create() {
   run_log "Compressing image" xz "$IMAGE_PATH"
 }
 
-image_sign_rpi() {
+image_sign() {
   if [ ! -f "$SCRIPT_DIR/$IMAGE_NAME-$RELEASE_NAME.img.xz" ]; then
     error "$SCRIPT_DIR/$IMAGE_NAME-$RELEASE_NAME.img.xz does not exist"
   fi
