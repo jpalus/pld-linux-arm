@@ -344,7 +344,7 @@ image_setup_params_odroid_n2() {
   IMAGE_NAME=odroid-n2
   IMAGE_DESC="Odroid N2/N2+"
   IMAGE_BOOT_PARAMS="earlycon"
-  IMAGE_INITRD_MODULES="fixed pwm-regulator gpio-regulator rtc_pcf8563 g12a pwm-meson reset-meson clk-cpu-dyndiv clk-dualdiv clk-mpll clk-phase clk-pll clk-regmap g12a-aoclk meson-aoclk meson-eeclk sclk-div meson_sm i2c-meson meson_saradc pinctrl-meson-axg-pmx pwrseq_emmc meson-gx-mmc meson-mx-sdio pinctrl-meson-g12a meson-canvas meson-clk-measure meson-ee-pwrc meson-gx-pwrc-vpu meson-secure-pwrc mmc-block "
+  IMAGE_INITRD_MODULES="fixed gpio-regulator rtc_pcf8563 g12a pinctrl-meson-g12a reset-meson g12a-aoclk pwrseq_emmc mmc-block meson-gx-mmc"
   IMAGE_DISPLAY_ENABLED=1
   IMAGE_SOUND_ENABLED=1
 }
