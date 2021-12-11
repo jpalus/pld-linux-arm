@@ -354,6 +354,26 @@ image_install_bootloader_odroid_n2() {
   run_log_priv "Writing uboot image" dd if="$IMAGE_MOUNT_DIR/usr/share/uboot/odroid-n2/u-boot.bin" of="$IMAGE_LO_DEVICE" bs=512 seek=1 conv=notrunc,fsync
 }
 
+image_setup_params_pinebook_pro() {
+  IMAGE_TYPE=pbp
+  IMAGE_NAME=pinebook-pro
+  IMAGE_DESC="Pinebook Pro"
+  IMAGE_INITRD_MODULES="pinctrl-rockchip i2c-rk3x fixed pl330 fan53555 rk808 rk808-regulator rtc-rk808 pcie-rockchip-host phy-rockchip-pcie nvme_core nvme sdhci_of_arasan dw_mmc_rockchip phy_rockchip_emmc mmc_block gpio-rockchip"
+  IMAGE_DISPLAY_ENABLED=1
+  IMAGE_SOUND_ENABLED=1
+  IMAGE_WIFI_ENABLED=1
+}
+
+image_install_bootloader_pbp() {
+  poldek_install "Installing uboot" --root "$IMAGE_MOUNT_DIR" uboot-image-pinebook-pro
+  run_log_priv "Writing pre-bootloader image" dd if="$IMAGE_MOUNT_DIR/usr/share/uboot/pinebook-pro-rk3399/idbloader.img" of=$IMAGE_LO_DEVICE seek=64 conv=notrunc,fsync
+  run_log_priv "Writing uboot image" dd if="$IMAGE_MOUNT_DIR/usr/share/uboot/pinebook-pro-rk3399/u-boot.itb" of=$IMAGE_LO_DEVICE seek=16384 conv=notrunc,fsync
+}
+
+image_install_board_pkgs_pbp() {
+  poldek_install "Installing linux-firmware bcm43456-firmware" --root "$IMAGE_MOUNT_DIR" linux-firmware bcm43456-firmware
+}
+
 image_create() {
   if [ ! -f "$SCRIPT_DIR/$RELEASE_NAME.tar.xz" ]; then
     error "$SCRIPT_DIR/$RELEASE_NAME.tar.xz does not exist"
@@ -422,7 +442,7 @@ case "$1" in
       create|sign)
         IMAGE_SIZE_MB=1024
         case "$3" in
-          rpi|odroid-n2)
+          rpi|odroid-n2|pinebook-pro)
             ACTION=$1-$2-$3
             eval image_setup_params_$(echo $3|tr - _)
             $1_$2
