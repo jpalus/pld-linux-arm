@@ -88,6 +88,7 @@ create() {
 
   run_log_priv "Setting up temporary chroot in $CHROOT_DIR" rpm --initdb --root "$CHROOT_DIR"
   poldek_install "Installing packages from $SCRIPT_DIR/base.pkgs" --pset="$SCRIPT_DIR/base.pkgs" --root="$CHROOT_DIR" --pmopt='--define=_tmppath\ /tmp'
+  run_log_priv "Setting systemd default target to multi-user.target" ln -sf /lib/systemd/system/multi-user.target "$CHROOT_DIR/etc/systemd/system/default.target"
   if [ ! -f jpalus.asc ]; then
     run_log "Preparing public key" gpg --output jpalus.asc --armor --export 'Jan Palus'
   fi
