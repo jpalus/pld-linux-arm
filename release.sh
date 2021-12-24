@@ -282,6 +282,7 @@ image_setup_initrd() {
   run_log_priv "Use modprobe in initrd" tee -a "$IMAGE_MOUNT_DIR/etc/sysconfig/geninitrd" <<EOF
 USE_MODPROBE=yes
 EOF
+  run_log_priv "Disable udev in initrd" sed -i "s/.*USE_UDEV=.*/USE_UDEV=no/" "$IMAGE_MOUNT_DIR/etc/sysconfig/geninitrd"
 }
 
 image_install_board_pkgs() {
