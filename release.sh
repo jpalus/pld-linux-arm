@@ -190,7 +190,7 @@ image_prepare_file() {
   IMAGE_FILENAME=$IMAGE_NAME-$RELEASE_NAME.img
   IMAGE_PATH=$SCRIPT_DIR/$IMAGE_FILENAME
   echo "Creating boot image for $IMAGE_DESC"
-  run_log "Preparing image file $IMAGE_FILENAME" dd if=/dev/zero "of=$IMAGE_PATH" bs=1M count=$IMAGE_SIZE_MB
+  run_log "Preparing image file $IMAGE_FILENAME" truncate -s ${IMAGE_SIZE_MB}M "$IMAGE_PATH"
 }
 
 image_create_loop_device() {
