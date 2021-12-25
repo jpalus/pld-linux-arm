@@ -12,6 +12,16 @@ poldek_install() {
   run_log_priv "$msg" $CHROOT poldek -iv --noask --pmopt='--define=_excludedocs\ 1' --pmopt='--define=_install_langs\ %{nil}' "$@"
 }
 
+check_dep() {
+  if ! command -v $1 > /dev/null 2> /dev/null; then
+    if [ "$PLD_ARM_IN_CONTAINER" = "1" ]; then
+      run_log_priv "Installing ${2:-$1}" poldek -uv ${2:-$1}
+    else
+      error "Mandatory command '$1' not found"
+    fi
+  fi
+}
+
 setup_log_file() {
   if [ -z "$LOG_FILE" ]; then
     LOG_FILE="$SCRIPT_DIR/$RELEASE_NAME-$ACTION.log"
@@ -93,13 +103,7 @@ create() {
   if [ ! -f "$SCRIPT_DIR/jpalus.asc" ]; then
     run_log "Fetching public key" wget http://jpalus.fastmail.com/jpalus.asc -O "$SCRIPT_DIR/jpalus.asc"
   fi
-  if ! command -v gpg > /dev/null 2> /dev/null; then
-    if [ "$PLD_ARM_IN_CONTAINER" = "1" ]; then
-      run_log_priv "Installing gnupg2" poldek -uv gnupg2
-    else
-      error "Mandatory command 'gpg' not found"
-    fi
-  fi
+  check_dep gpg gnupg2
   if ! gpg --show-keys "$SCRIPT_DIR/jpalus.asc" | grep -iq 7D4F29DD11CB9CAEBA20E59FEA3B49141E88A192; then
     error "Public key validation failed"
   fi
