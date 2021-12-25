@@ -90,10 +90,20 @@ create() {
   poldek_install "Installing packages from $SCRIPT_DIR/base.pkgs" --pset="$SCRIPT_DIR/base.pkgs" --root="$CHROOT_DIR" --pmopt='--define=_tmppath\ /tmp'
   run_log_priv "Setting systemd default target to multi-user.target" ln -sf /lib/systemd/system/multi-user.target "$CHROOT_DIR/etc/systemd/system/default.target"
   run_log_priv "Disabling network.service" rm "$CHROOT_DIR/etc/systemd/system/multi-user.target.wants/network.service"
-  if [ ! -f jpalus.asc ]; then
-    run_log "Preparing public key" gpg --output jpalus.asc --armor --export 'Jan Palus'
+  if [ ! -f "$SCRIPT_DIR/jpalus.asc" ]; then
+    run_log "Fetching public key" wget http://jpalus.fastmail.com/jpalus.asc -O "$SCRIPT_DIR/jpalus.asc"
   fi
-  run_log_priv "Importing public key" rpm --root="$CHROOT_DIR" --import jpalus.asc
+  if ! command -v gpg > /dev/null 2> /dev/null; then
+    if [ "$PLD_ARM_IN_CONTAINER" = "1" ]; then
+      run_log_priv "Installing gnupg2" poldek -uv gnupg2
+    else
+      error "Mandatory command 'gpg' not found"
+    fi
+  fi
+  if ! gpg --show-keys "$SCRIPT_DIR/jpalus.asc" | grep -iq 7D4F29DD11CB9CAEBA20E59FEA3B49141E88A192; then
+    error "Public key validation failed"
+  fi
+  run_log_priv "Importing public key" rpm --root="$CHROOT_DIR" --import "$SCRIPT_DIR/jpalus.asc"
   run_log_priv "Disabling default poldek repository configuration for $ARCH" sed -i -e "/^path.*=.*%{_prefix}\/PLD\/%{_arch}\/RPMS/ a auto = no\\nautoup = no" "$CHROOT_DIR/etc/poldek/repos.d/pld.conf"
   run_log_priv "Configuring custom $ARCH repository" tee "$CHROOT_DIR/etc/poldek/repos.d/jpalus.conf" <<EOF
 [source]
