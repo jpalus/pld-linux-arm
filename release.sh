@@ -424,6 +424,11 @@ image_sign() {
 }
 
 case "$1" in
+  -c)
+    shift
+    echo Running in container: $DOCKER_TAG_LATEST
+    exec podman run --rm -a=stdin -a=stderr -a=stdout -e ARCH -e PLD_ARM_IN_CONTAINER=1 -v="$SCRIPT_DIR:/pld-linux-arm" $DOCKER_TAG_LATEST "/pld-linux-arm/$(basename $0)" "$@"
+    ;;
   create|sign)
     ACTION=$1
     $1
