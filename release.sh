@@ -12,6 +12,16 @@ poldek_install() {
   run_log_priv "$msg" $CHROOT poldek -iv --noask --pmopt='--define=_excludedocs\ 1' --pmopt='--define=_install_langs\ %{nil}' "$@"
 }
 
+check_args_nr() {
+  local expected_nr=$1
+  shift
+
+  if [ $# -ne $expected_nr ]; then
+    shift $(test $# -lt $expected_nr && echo $# || echo $expected_nr)
+    error "Invalid arguments: $@"
+  fi
+}
+
 check_dep() {
   if ! command -v $1 > /dev/null 2> /dev/null; then
     if [ "$PLD_ARM_IN_CONTAINER" = "1" ]; then
@@ -444,12 +454,14 @@ case "$1" in
     exec podman run --rm -t -a=stdin -a=stderr -a=stdout -e ARCH -e PLD_ARM_IN_CONTAINER=1 -v="$SCRIPT_DIR:/pld-linux-arm" $DOCKER_TAG_LATEST "/pld-linux-arm/$(basename $0)" "$@"
     ;;
   create|sign)
+    check_args_nr 1 "$@"
     ACTION=$1
     $1
     ;;
   publish)
     case "$2" in
       dockerhub)
+        check_args_nr 2 "$@"
         ACTION=$1-$2
         $1_$2
         ;;
@@ -465,6 +477,7 @@ case "$1" in
         IMAGE_SIZE_MB=1024
         case "$3" in
           rpi|odroid-n2|pinebook-pro)
+            check_args_nr 3 "$@"
             ACTION=$1-$2-$3
             eval image_setup_params_$(echo $3|tr - _)
             $1_$2
