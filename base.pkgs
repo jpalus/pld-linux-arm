@@ -16,6 +16,7 @@ mksh
 openssh-clients
 openssh-server
 ping
+pld-release
 poldek
 rpm
 sed
