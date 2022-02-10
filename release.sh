@@ -25,7 +25,7 @@ check_args_nr() {
 check_dep() {
   if ! command -v $1 > /dev/null 2> /dev/null; then
     if [ "$PLD_ARM_IN_CONTAINER" = "1" ]; then
-      run_log_priv "Installing ${2:-$1}" poldek -uv ${2:-$1}
+      run_log_priv "Installing ${2:-$1}" poldek -uv --noask ${2:-$1}
     else
       error "Mandatory command '$1' not found"
     fi
