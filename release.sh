@@ -110,7 +110,7 @@ create() {
   poldek_install "Installing packages from $SCRIPT_DIR/base.pkgs" --pset="$SCRIPT_DIR/base.pkgs" --root="$CHROOT_DIR" --pmopt='--define=_tmppath\ /tmp'
   run_log_priv "Setting systemd default target to multi-user.target" ln -sf /lib/systemd/system/multi-user.target "$CHROOT_DIR/etc/systemd/system/default.target"
   run_log_priv "Disabling network.service" rm "$CHROOT_DIR/etc/systemd/system/multi-user.target.wants/network.service"
-  run_log_priv "Enabling tmp.mount" ln -s /lib/systemd/system/tmp.mount "$CHROOT_DIR/etc/systemd/system/local-fs.target.wants/tmp.mount"
+  run_log_priv "Enabling tmp.mount" mkdir -p "$CHROOT_DIR/etc/systemd/system/local-fs.target.wants" && ln -s /lib/systemd/system/tmp.mount "$CHROOT_DIR/etc/systemd/system/local-fs.target.wants/tmp.mount"
   run_log_priv "Masking pld-clean-tmp.service" ln -s /dev/null "$CHROOT_DIR/etc/systemd/system/pld-clean-tmp.service"
   if [ ! -f "$SCRIPT_DIR/jpalus.asc" ]; then
     run_log "Fetching public key" wget http://jpalus.fastmail.com/jpalus.asc -O "$SCRIPT_DIR/jpalus.asc"
