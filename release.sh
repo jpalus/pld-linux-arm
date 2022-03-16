@@ -373,7 +373,7 @@ image_setup_params_odroid_n2() {
   IMAGE_NAME=odroid-n2
   IMAGE_DESC="Odroid N2/N2+"
   IMAGE_BOOT_PARAMS="earlycon"
-  IMAGE_INITRD_MODULES="fixed gpio-regulator rtc_pcf8563 g12a pinctrl-meson-g12a reset-meson g12a-aoclk pwrseq_emmc mmc-block meson-gx-mmc"
+  IMAGE_INITRD_MODULES="fixed gpio-regulator i2c-meson rtc-pcf8563 g12a pinctrl-meson-g12a reset-meson g12a-aoclk pwrseq_emmc mmc-block meson-gx-mmc"
   IMAGE_DISPLAY_ENABLED=1
   IMAGE_SOUND_ENABLED=1
 }
