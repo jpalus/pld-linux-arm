@@ -152,7 +152,21 @@ publish_dockerhub() {
     error "$SCRIPT_DIR/$RELEASE_NAME.tar.xz does not exist"
   fi
   echo "Publishing release $RELEASE_NAME to Docker Hub"
-  run_log "Importing docker image $DOCKER_TAG" podman import "$SCRIPT_DIR/$RELEASE_NAME.tar.xz" $DOCKER_REGISTRY/$DOCKER_TAG
+  case "$ARCH" in
+    aarch64)
+      IMAGE_ARCH=arm64
+      IMAGE_VARIANT=
+      ;;
+    armv6*)
+      IMAGE_ARCH=arm
+      IMAGE_VARIANT=v6
+      ;;
+    armv7*)
+      IMAGE_ARCH=arm
+      IMAGE_VARIANT=v7
+      ;;
+  esac
+  run_log "Importing docker image $DOCKER_TAG" podman import --os linux --arch $IMAGE_ARCH ${IMAGE_VARIANT:+--variant $IMAGE_VARIANT} "$SCRIPT_DIR/$RELEASE_NAME.tar.xz" $DOCKER_REGISTRY/$DOCKER_TAG
   run_log "Tagging docker image $DOCKER_TAG as latest" podman tag $DOCKER_REGISTRY/$DOCKER_TAG $DOCKER_REGISTRY/$DOCKER_TAG_LATEST
   run_log "Pushing docker tag $DOCKER_TAG" podman push $DOCKER_REGISTRY/$DOCKER_TAG
   run_log "Pushing docker tag $DOCKER_TAG_LATEST" podman push $DOCKER_REGISTRY/$DOCKER_TAG_LATEST
