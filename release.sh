@@ -402,7 +402,7 @@ image_setup_params_pinebook_pro() {
   IMAGE_TYPE=pbp
   IMAGE_NAME=pinebook-pro
   IMAGE_DESC="Pinebook Pro"
-  IMAGE_INITRD_MODULES="pinctrl-rockchip i2c-rk3x fixed pl330 fan53555 rk808 rk808-regulator rtc-rk808 pcie-rockchip-host phy-rockchip-pcie nvme_core nvme sdhci_of_arasan dw_mmc_rockchip phy_rockchip_emmc mmc_block gpio-rockchip"
+  IMAGE_INITRD_MODULES="8250-dw pinctrl-rockchip i2c-rk3x fixed pl330 fan53555 rk808 rk808-regulator rtc-rk808 pcie-rockchip-host phy-rockchip-pcie nvme_core nvme sdhci_of_arasan dw_mmc_rockchip phy_rockchip_emmc mmc_block gpio-rockchip"
   IMAGE_DISPLAY_ENABLED=1
   IMAGE_SOUND_ENABLED=1
   IMAGE_WIFI_ENABLED=1
