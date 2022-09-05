@@ -1,5 +1,4 @@
 bash
-bind-utils
 bzip2
 coreutils
 dhcp-client
@@ -9,8 +8,6 @@ grep
 gzip
 iproute2
 less
-lz4
-lzo
 mawk
 mksh
 openssh-clients
@@ -33,5 +30,3 @@ vim-rt
 wget
 which
 xz
-zsh
-zstd
