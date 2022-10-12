@@ -428,7 +428,7 @@ image_create() {
   image_dispatch image_prepare_file
   image_dispatch image_create_loop_device
   image_dispatch image_create_partitions
-  run_log_priv "Probing for new partitions" partprobe $IMAGE_LO_DEVICE
+  run_log_priv "Probing for new partitions" partx -a $IMAGE_LO_DEVICE
   image_dispatch image_create_fs
   IMAGE_MOUNT_DIR=$(mktemp -d)
   image_dispatch image_mount_fs
