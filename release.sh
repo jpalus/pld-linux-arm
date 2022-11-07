@@ -168,8 +168,8 @@ publish_dockerhub() {
   esac
   run_log "Importing docker image $DOCKER_TAG" podman import --os linux --arch $IMAGE_ARCH ${IMAGE_VARIANT:+--variant $IMAGE_VARIANT} "$SCRIPT_DIR/$RELEASE_NAME.tar.xz" $DOCKER_REGISTRY/$DOCKER_TAG
   run_log "Tagging docker image $DOCKER_TAG as latest" podman tag $DOCKER_REGISTRY/$DOCKER_TAG $DOCKER_REGISTRY/$DOCKER_TAG_LATEST
-  run_log "Pushing docker tag $DOCKER_TAG" podman push $DOCKER_REGISTRY/$DOCKER_TAG
-  run_log "Pushing docker tag $DOCKER_TAG_LATEST" podman push $DOCKER_REGISTRY/$DOCKER_TAG_LATEST
+  run_log "Pushing docker tag $DOCKER_TAG" podman push -f v2s2 $DOCKER_REGISTRY/$DOCKER_TAG
+  run_log "Pushing docker tag $DOCKER_TAG_LATEST" podman push -f v2s2 $DOCKER_REGISTRY/$DOCKER_TAG_LATEST
 }
 
 image_unmount_fs() {
