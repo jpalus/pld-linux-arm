@@ -91,11 +91,11 @@ if [ $? -ne 0 ] || [ -z "$ARCH" ]; then
 fi
 
 SCRIPT_DIR=$(dirname $(readlink -f "$0"))
-TIMESTAMP=$(date +%Y%m%d)
-RELEASE_NAME="pld-linux-base-$ARCH-$TIMESTAMP"
+RELEASE_TIMESTAMP=${RELEASE_TIMESTAMP:-$(date +%Y%m%d)}
+RELEASE_NAME="pld-linux-base-$ARCH-$RELEASE_TIMESTAMP"
 DOCKER_REGISTRY=docker.io
 DOCKER_REPO="jpalus/pld-linux-$ARCH"
-DOCKER_TAG="$DOCKER_REPO:$TIMESTAMP"
+DOCKER_TAG="$DOCKER_REPO:$RELEASE_TIMESTAMP"
 DOCKER_TAG_LATEST="$DOCKER_REPO:latest"
 
 create() {
@@ -469,7 +469,7 @@ case "$1" in
   -c)
     shift
     echo Running in container: $DOCKER_TAG_LATEST
-    exec podman run --rm -t -a=stdin -a=stderr -a=stdout -e ARCH -e PLD_ARM_IN_CONTAINER=1 -v="$SCRIPT_DIR:/pld-linux-arm" $DOCKER_TAG_LATEST "/pld-linux-arm/$(basename $0)" "$@"
+    exec podman run --rm -t -a=stdin -a=stderr -a=stdout -e ARCH=$ARCH -e PLD_ARM_IN_CONTAINER=1 -e RELEASE_TIMESTAMP=$RELEASE_TIMESTAMP -v="$SCRIPT_DIR:/pld-linux-arm" $DOCKER_TAG_LATEST "/pld-linux-arm/$(basename $0)" "$@"
     ;;
   create|sign)
     check_args_nr 1 "$@"
