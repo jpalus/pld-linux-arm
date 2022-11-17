@@ -106,6 +106,8 @@ DOCKER_TAG_LATEST="$DOCKER_REPO:latest"
 DOWNLOAD_URL="https://github.com/jpalus/pld-linux-arm/releases/download"
 RELEASE_DOWNLOAD_URL="https://github.com/jpalus/pld-linux-arm/releases/download/pld-linux-arm-$RELEASE_TIMESTAMP"
 
+BASIC_PKGS="bzip2 dhcp-client e2fsprogs gzip iproute2 less openssh-clients openssh-server ping shadow sudo systemd systemd-init tar unzip wget xz"
+
 create() {
   echo "Creating release $RELEASE_NAME"
 
@@ -259,6 +261,10 @@ image_mount_fs() {
     fi
     run_log_priv "Mounting boot firmware partition to $IMAGE_MOUNT_DIR/boot/firmware" mount ${IMAGE_FIRMWARE_DEVICE} "$IMAGE_MOUNT_DIR/boot/firmware"
   fi
+}
+
+image_install_basic_pkgs() {
+  poldek_install "Installing basic packages" --root "$IMAGE_MOUNT_DIR" -n jpalus -n th $BASIC_PKGS
 }
 
 _part_id() {
@@ -441,6 +447,7 @@ image_create() {
   IMAGE_MOUNT_DIR=$(mktemp -d)
   image_dispatch image_mount_fs
   run_log_priv "Extracting $RELEASE_NAME to $IMAGE_MOUNT_DIR" tar xf "$SCRIPT_DIR/$RELEASE_NAME.tar.xz" -C "$IMAGE_MOUNT_DIR"
+  image_dispatch image_install_basic_pkgs
   image_dispatch image_prepare_fstab
   echo -e 'pld\npld' | run_log_priv "Setting root password" chroot "$IMAGE_MOUNT_DIR" passwd
   image_dispatch image_install_bootloader
