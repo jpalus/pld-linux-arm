@@ -84,6 +84,11 @@ is_on() {
   esac
 }
 
+release_name() {
+  local _arch=${1:-$ARCH}
+  echo pld-linux-base-$_arch-$RELEASE_TIMESTAMP
+}
+
 ARCH=${ARCH:-$(rpm -E %{_host_cpu})}
 
 if [ $? -ne 0 ] || [ -z "$ARCH" ]; then
@@ -92,11 +97,14 @@ fi
 
 SCRIPT_DIR=$(dirname $(readlink -f "$0"))
 RELEASE_TIMESTAMP=${RELEASE_TIMESTAMP:-$(date +%Y%m%d)}
-RELEASE_NAME="pld-linux-base-$ARCH-$RELEASE_TIMESTAMP"
+RELEASE_NAME=$(release_name)
 DOCKER_REGISTRY=docker.io
 DOCKER_REPO="jpalus/pld-linux-$ARCH"
 DOCKER_TAG="$DOCKER_REPO:$RELEASE_TIMESTAMP"
 DOCKER_TAG_LATEST="$DOCKER_REPO:latest"
+
+DOWNLOAD_URL="https://github.com/jpalus/pld-linux-arm/releases/download"
+RELEASE_DOWNLOAD_URL="https://github.com/jpalus/pld-linux-arm/releases/download/pld-linux-arm-$RELEASE_TIMESTAMP"
 
 create() {
   echo "Creating release $RELEASE_NAME"
@@ -465,6 +473,16 @@ image_sign() {
   run_log 'Signing' gpg --sign --armor --detach-sig "$SCRIPT_DIR/$IMAGE_NAME-$RELEASE_NAME.img.xz"
 }
 
+update_termux_proot() {
+  cat <<EOF > termux-proot/pld-linux-arm.sh
+DISTRO_NAME="PLD Linux Distribution"
+TARBALL_URL['aarch64']="$RELEASE_DOWNLOAD_URL/$(release_name aarch64).tar.xz"
+TARBALL_SHA256['aarch64']="$(sha256sum $SCRIPT_DIR/$(release_name aarch64).tar.xz | cut -f1 -d' ')"
+TARBALL_URL['arm']="$RELEASE_DOWNLOAD_URL/$(release_name armv6hl).tar.xz"
+TARBALL_SHA256['arm']="$(sha256sum $SCRIPT_DIR/$(release_name armv6hl).tar.xz | cut -f1 -d' ')"
+EOF
+}
+
 case "$1" in
   -c)
     shift
@@ -509,6 +527,17 @@ case "$1" in
       *)
         ACTION=unknown
         error "Unknown image action: $2"
+        ;;
+    esac
+    ;;
+  update)
+    case "$2" in
+      termux-proot)
+        update_termux_proot
+        ;;
+      *)
+        ACTION=unknown
+        error "Unknown update action: $2"
         ;;
     esac
     ;;
