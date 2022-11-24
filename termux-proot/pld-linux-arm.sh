@@ -1,6 +1,5 @@
 DISTRO_NAME="PLD Linux Distribution"
-PLD_LINUX_ARM_VERSION=20221107
-TARBALL_URL['aarch64']="https://github.com/jpalus/pld-linux-arm/releases/download/pld-linux-arm-$PLD_LINUX_ARM_VERSION/pld-linux-base-aarch64-$PLD_LINUX_ARM_VERSION.tar.xz"
-TARBALL_SHA256['aarch64']="3ffc119a32e281dbd9c4587578b094dc4be1b919a5321142aa72501677379dfc"
-TARBALL_URL['arm']="https://github.com/jpalus/pld-linux-arm/releases/download/pld-linux-arm-$PLD_LINUX_ARM_VERSION/pld-linux-base-armv6hl-$PLD_LINUX_ARM_VERSION.tar.xz"
-TARBALL_SHA256['arm']="033a56555ae809ae73e5a3c47868a2a284765e6a4d75922c3793286d04a356ed"
+TARBALL_URL['aarch64']="https://github.com/jpalus/pld-linux-arm/releases/download/pld-linux-arm-20221124/pld-linux-base-aarch64-20221124.tar.xz"
+TARBALL_SHA256['aarch64']="9b04824e938e1e1a7ed4406a1144776218297ba065f7a3fbbfab944bc17ed346"
+TARBALL_URL['arm']="https://github.com/jpalus/pld-linux-arm/releases/download/pld-linux-arm-20221124/pld-linux-base-armv6hl-20221124.tar.xz"
+TARBALL_SHA256['arm']="11d1a3bffc623eca73cb9ef5a263b67622aeff8a13efd2e4e98e8a99a40ee87f"
