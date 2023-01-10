@@ -135,6 +135,8 @@ path = http://jpalus.fastmail.com.user.fm/dists/th/PLD/$ARCH/RPMS/
 signed = yes
 EOF
   rpm --root="$CHROOT_DIR" -qa|sort > "$SCRIPT_DIR/$RELEASE_NAME.packages"
+  check_dep tar
+  check_dep xz
   run_log_priv "Creating archive $SCRIPT_DIR/$RELEASE_NAME.tar.xz" tar -Jcpf "$SCRIPT_DIR/$RELEASE_NAME.tar.xz" -C "$CHROOT_DIR" .
 
   if [ "$(id -u)" != "0" ]; then
