@@ -500,7 +500,7 @@ case "$1" in
   -c)
     shift
     echo Running in container: $DOCKER_TAG_LATEST
-    exec podman run --rm -t -a=stdin -a=stderr -a=stdout -e ARCH=$ARCH -e PLD_ARM_IN_CONTAINER=1 -e RELEASE_TIMESTAMP=$RELEASE_TIMESTAMP -v="$SCRIPT_DIR:/pld-linux-arm" $DOCKER_TAG_LATEST "/pld-linux-arm/$(basename $0)" "$@"
+    exec podman run --cap-add SYS_CHROOT --rm -t -a=stdin -a=stderr -a=stdout -e ARCH=$ARCH -e PLD_ARM_IN_CONTAINER=1 -e RELEASE_TIMESTAMP=$RELEASE_TIMESTAMP -v="$SCRIPT_DIR:/pld-linux-arm" $DOCKER_TAG_LATEST "/pld-linux-arm/$(basename $0)" "$@"
     ;;
   create|sign)
     check_args_nr 1 "$@"
