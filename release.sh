@@ -119,6 +119,7 @@ create() {
   run_log_priv "Setting up temporary chroot in $CHROOT_DIR" rpm --initdb --root "$CHROOT_DIR"
   poldek_install "Installing packages from $SCRIPT_DIR/base.pkgs" --pset="$SCRIPT_DIR/base.pkgs" --root="$CHROOT_DIR" --pmopt='--define=_tmppath\ /tmp'
   if [ ! -f "$SCRIPT_DIR/jpalus.asc" ]; then
+    check_dep wget
     run_log "Fetching public key" wget http://jpalus.fastmail.com/jpalus.asc -O "$SCRIPT_DIR/jpalus.asc"
   fi
   check_dep gpg gnupg2
