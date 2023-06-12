@@ -106,7 +106,7 @@ DOCKER_TAG_LATEST="$DOCKER_REPO:latest"
 DOWNLOAD_URL="https://github.com/jpalus/pld-linux-arm/releases/download"
 RELEASE_DOWNLOAD_URL="https://github.com/jpalus/pld-linux-arm/releases/download/pld-linux-arm-$RELEASE_TIMESTAMP"
 
-BASIC_PKGS="bzip2 dhcp-client e2fsprogs gzip iproute2 less openssh-clients openssh-server ping shadow sudo systemd systemd-init tar unzip wget xz"
+BASIC_PKGS="bzip2 dhcp-client e2fsprogs gzip iproute2 less lz4 openssh-clients openssh-server ping shadow sudo systemd systemd-init tar unzip wget xz"
 
 create() {
   echo "Creating release $RELEASE_NAME"
