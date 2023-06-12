@@ -196,6 +196,7 @@ image_unmount_fs() {
 
 image_detach_loop_device() {
   if [ -n "$IMAGE_LO_DEVICE" ]; then
+    run_log_priv "Delete information about loop device partitions" partx -d $IMAGE_LO_DEVICE
     run_log_priv "Detaching loop devcie" losetup -d $IMAGE_LO_DEVICE
     unset IMAGE_LO_DEVICE
   fi
