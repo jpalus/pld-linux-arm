@@ -484,6 +484,7 @@ Type=ether
 DHCP=yes
 EOF
   run_log_priv "Cleaning up poldek cache" rm -rf "$IMAGE_MOUNT_DIR/root/.poldek-cache"
+  image_unmount_fs
   run_log "Compressing image" xz "$IMAGE_PATH"
 }
 
