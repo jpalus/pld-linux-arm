@@ -476,6 +476,13 @@ image_create() {
     poldek_install "Installing iwd wireless-regdb" --root "$IMAGE_MOUNT_DIR" iwd wireless-regdb
   fi
   run_log_priv "Enabling networkd link handling" rm "$IMAGE_MOUNT_DIR/etc/udev/rules.d/80-net-setup-link.rules"
+  run_log_priv "Auto-configure Ethernet devices with networkd" sh -c "cat > $IMAGE_MOUNT_DIR/etc/systemd/network/50-ether.network" <<EOF
+[Match]
+Type=ether
+
+[Network]
+DHCP=yes
+EOF
   run_log_priv "Cleaning up poldek cache" rm -rf "$IMAGE_MOUNT_DIR/root/.poldek-cache"
   run_log "Compressing image" xz "$IMAGE_PATH"
 }
