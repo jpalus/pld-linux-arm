@@ -440,6 +440,13 @@ image_install_board_pkgs_pbp() {
   poldek_install "Installing linux-firmware bcm43456-firmware" --root "$IMAGE_MOUNT_DIR" linux-firmware bcm43456-firmware
 }
 
+image_setup_params_qemu() {
+  IMAGE_TYPE=qemu
+  IMAGE_NAME=qemu
+  IMAGE_DESC="QEMU"
+  IMAGE_INITRD_MODULES="virtio-blk virtio-pci virtio_pci_modern_dev virtio-mmio"
+}
+
 image_create() {
   if [ ! -f "$SCRIPT_DIR/$RELEASE_NAME.tar.xz" ]; then
     error "$SCRIPT_DIR/$RELEASE_NAME.tar.xz does not exist"
@@ -535,7 +542,7 @@ case "$1" in
       create|sign)
         IMAGE_SIZE_MB=1024
         case "$3" in
-          rpi|odroid-n2|pinebook-pro)
+          rpi|odroid-n2|pinebook-pro|qemu)
             check_args_nr 3 "$@"
             ACTION=$1-$2-$3
             eval image_setup_params_$(echo $3|tr - _)
