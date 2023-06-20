@@ -182,6 +182,9 @@ publish_dockerhub() {
 
 image_unmount_fs() {
   if [ -n "$IMAGE_MOUNT_DIR" ] && [ -d "$IMAGE_MOUNT_DIR" ]; then
+    if [ -d "$IMAGE_MOUNT_DIR/boot/efi" ] && mountpoint -q "$IMAGE_MOUNT_DIR/boot/efi"; then
+      run_log_priv "Unmounting EFI system partition" umount "$IMAGE_MOUNT_DIR/boot/efi"
+    fi
     if [ -d "$IMAGE_MOUNT_DIR/boot/firmware" ] && mountpoint -q "$IMAGE_MOUNT_DIR/boot/firmware"; then
       run_log_priv "Unmounting boot firmware partition" umount "$IMAGE_MOUNT_DIR/boot/firmware"
     fi
@@ -244,15 +247,22 @@ image_create_loop_device() {
 }
 
 image_create_partitions() {
-  run_log_priv "Creating partition table on $IMAGE_LO_DEVICE" sfdisk -q $IMAGE_LO_DEVICE <<EOF 
-label: dos
-- - - *
-EOF
-  IMAGE_ROOT_DEVICE=${IMAGE_LO_DEVICE}p1
+  local part_table next_part_nr=1
+  if [ "$IMAGE_EFI_ENABLED" = "1" ]; then
+    part_table="${part_table}size=256MiB, type=ef$(printf '\\n')"
+    IMAGE_EFI_DEVICE=${IMAGE_LO_DEVICE}p$next_part_nr
+    next_part_nr=$((next_part_nr + 1))
+  fi
+  part_table="$part_table- - - *";
+  IMAGE_ROOT_DEVICE=${IMAGE_LO_DEVICE}p$next_part_nr
+  echo "$part_table" | run_log_priv "Creating partition table on $IMAGE_LO_DEVICE" sfdisk -q $IMAGE_LO_DEVICE
 }
 
 image_create_fs() {
-  run_log_priv "Creating ext4 partition for PLD root" mkfs.ext4 -q -L PLD_ROOT ${IMAGE_ROOT_DEVICE}
+  if [ "$IMAGE_EFI_ENABLED" = "1" ]; then
+    run_log_priv "Formatting EFI system partition" mkfs.vfat -F 32 -n EFI ${IMAGE_EFI_DEVICE}
+  fi
+  run_log_priv "Formatting ext4 partition for PLD root" mkfs.ext4 -q -L PLD_ROOT ${IMAGE_ROOT_DEVICE}
 }
 
 image_mount_fs() {
@@ -268,6 +278,12 @@ image_mount_fs() {
       run_log_priv "Creating $IMAGE_MOUNT_DIR/boot/firmware" mkdir -p $IMAGE_MOUNT_DIR/boot/firmware
     fi
     run_log_priv "Mounting boot firmware partition to $IMAGE_MOUNT_DIR/boot/firmware" mount ${IMAGE_FIRMWARE_DEVICE} "$IMAGE_MOUNT_DIR/boot/firmware"
+  fi
+  if [ -n "$IMAGE_EFI_DEVICE" ]; then
+    if [ ! -e "$IMAGE_MOUNT_DIR/boot/efi" ]; then
+      run_log_priv "Creating $IMAGE_MOUNT_DIR/boot/efi" mkdir -p $IMAGE_MOUNT_DIR/boot/efi
+    fi
+    run_log_priv "Mounting EFI system partition to $IMAGE_MOUNT_DIR/boot/efi" mount ${IMAGE_EFI_DEVICE} "$IMAGE_MOUNT_DIR/boot/efi"
   fi
 }
 
@@ -312,15 +328,24 @@ $(_fstab_entry $IMAGE_BOOT_DEVICE /boot)"
     FSTAB="$FSTAB
 $(_fstab_entry $IMAGE_FIRMWARE_DEVICE /boot/firmware)"
   fi
+  if [ -n "$IMAGE_EFI_DEVICE" ]; then
+    FSTAB="$FSTAB
+$(_fstab_entry $IMAGE_EFI_DEVICE /boot/efi)"
+  fi
   run_log_priv "Setting up fstab entries" tee -a "$IMAGE_MOUNT_DIR/etc/fstab" <<EOF 
 $FSTAB
 EOF
 }
 
 image_install_bootloader() {
+  if [ "$IMAGE_EFI_ENABLED" = "1" ]; then
+    poldek_install "Installing EFI packages" --root "$IMAGE_MOUNT_DIR" grub2-platform-efi
+  fi
 }
 
 image_setup_bootloader() {
+  local efi_target
+
   run_log_priv "Creating /boot/extlinux directory" install -d "$IMAGE_MOUNT_DIR/boot/extlinux"
   run_log_priv "Configuring uboot extlinux entry" tee -a "$IMAGE_MOUNT_DIR/boot/extlinux/extlinux.conf" <<EOF
 menu title PLD Boot Menu
@@ -339,6 +364,18 @@ label PLD.old
   initrd /boot/initrd.old
   fdtdir /boot/dtb.old
 EOF
+  if [ "$IMAGE_EFI_ENABLED" = "1" ]; then
+    run_log_priv "Updating GRUB configuration" chroot "$IMAGE_MOUNT_DIR" update-grub
+    case "$ARCH" in
+      aarch64)
+        efi_target=arm64-efi
+        ;;
+      armv*)
+        efi_target=arm-efi
+        ;;
+    esac
+    run_log_priv "Installing GRUB EFI application" chroot "$IMAGE_MOUNT_DIR" grub-install --target=$efi_target --efi-directory=/boot/efi --removable
+  fi
 }
 
 image_install_initrd_generator() {
@@ -453,6 +490,7 @@ image_setup_params_qemu() {
   IMAGE_TYPE=qemu
   IMAGE_NAME=qemu
   IMAGE_DESC="QEMU"
+  IMAGE_EFI_ENABLED=1
   IMAGE_INITRD_MODULES="virtio-blk virtio-pci virtio_pci_modern_dev virtio-mmio"
 }
 
@@ -478,7 +516,6 @@ image_create() {
   image_dispatch image_prepare_fstab
   echo -e 'pld\npld' | run_log_priv "Setting root password" chroot "$IMAGE_MOUNT_DIR" passwd
   image_dispatch image_install_bootloader
-  image_dispatch image_setup_bootloader
   image_dispatch image_install_initrd_generator
   image_dispatch image_setup_initrd
   image_dispatch image_install_board_pkgs
@@ -490,6 +527,7 @@ image_create() {
     KERNEL_PKGS="$KERNEL_PKGS kernel-sound-alsa"
   fi
   poldek_install "Installing kernel" --root "$IMAGE_MOUNT_DIR" $KERNEL_PKGS
+  image_dispatch image_setup_bootloader
   poldek_install "Installing systemd-networkd" --root "$IMAGE_MOUNT_DIR" systemd-networkd
   if is_on "$IMAGE_WIFI_ENABLED"; then
     poldek_install "Installing iwd wireless-regdb" --root "$IMAGE_MOUNT_DIR" iwd wireless-regdb
