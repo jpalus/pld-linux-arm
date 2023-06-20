@@ -9,7 +9,7 @@ poldek_install() {
     cmd="run_log"
   fi
 
-  run_log_priv "$msg" $CHROOT poldek -n jpalus -n th -n th-ready -n th-test -iv --noask --pmopt='--define=_excludedocs\ 1' --pmopt='--define=_install_langs\ %{nil}' "$@"
+  run_log_priv "$msg" $CHROOT poldek -n jpalus -n th -n th-ready -n th-test -uv --noask --pmopt='--define=_excludedocs\ 1' --pmopt='--define=_install_langs\ %{nil}' "$@"
 }
 
 check_args_nr() {
