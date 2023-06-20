@@ -9,7 +9,7 @@ poldek_install() {
     cmd="run_log"
   fi
 
-  run_log_priv "$msg" $CHROOT poldek -iv --noask --pmopt='--define=_excludedocs\ 1' --pmopt='--define=_install_langs\ %{nil}' "$@"
+  run_log_priv "$msg" $CHROOT poldek -n jpalus -n th -n th-ready -n th-test -iv --noask --pmopt='--define=_excludedocs\ 1' --pmopt='--define=_install_langs\ %{nil}' "$@"
 }
 
 check_args_nr() {
@@ -263,7 +263,7 @@ image_mount_fs() {
 }
 
 image_install_basic_pkgs() {
-  poldek_install "Installing basic packages" --root "$IMAGE_MOUNT_DIR" -n jpalus -n th $BASIC_PKGS
+  poldek_install "Installing basic packages" --root "$IMAGE_MOUNT_DIR" $BASIC_PKGS
 }
 
 image_systemd_setup() {
@@ -333,7 +333,7 @@ EOF
 }
 
 image_install_initrd_generator() {
-  poldek_install "Installing geninitrd" --root "$IMAGE_MOUNT_DIR" -n jpalus -n th geninitrd
+  poldek_install "Installing geninitrd" --root "$IMAGE_MOUNT_DIR" geninitrd
 }
 
 image_setup_initrd() {
