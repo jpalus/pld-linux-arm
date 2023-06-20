@@ -188,6 +188,15 @@ image_unmount_fs() {
     if [ -d "$IMAGE_MOUNT_DIR/boot" ] && mountpoint -q "$IMAGE_MOUNT_DIR/boot"; then
       run_log_priv "Unmounting boot partition" umount "$IMAGE_MOUNT_DIR/boot"
     fi
+    if [ -d "$IMAGE_MOUNT_DIR/dev" ] && mountpoint -q "$IMAGE_MOUNT_DIR/dev"; then
+      run_log_priv "Unmounting /dev" umount "$IMAGE_MOUNT_DIR/dev"
+    fi
+    if [ -d "$IMAGE_MOUNT_DIR/proc" ] && mountpoint -q "$IMAGE_MOUNT_DIR/proc"; then
+      run_log_priv "Unmounting /proc" umount "$IMAGE_MOUNT_DIR/proc"
+    fi
+    if [ -d "$IMAGE_MOUNT_DIR/sys" ] && mountpoint -q "$IMAGE_MOUNT_DIR/sys"; then
+      run_log_priv "Unmounting /sys" umount "$IMAGE_MOUNT_DIR/sys"
+    fi
     if mountpoint -q "$IMAGE_MOUNT_DIR"; then
       run_log_priv "Unmounting PLD root partition" umount "$IMAGE_MOUNT_DIR"
     fi
@@ -461,6 +470,9 @@ image_create() {
   IMAGE_MOUNT_DIR=$(mktemp -d)
   image_dispatch image_mount_fs
   run_log_priv "Extracting $RELEASE_NAME to $IMAGE_MOUNT_DIR" tar xf "$SCRIPT_DIR/$RELEASE_NAME.tar.xz" -C "$IMAGE_MOUNT_DIR"
+  run_log_priv "Binding /dev to $IMAGE_MOUNT_DIR/dev" mount -o bind /dev "$IMAGE_MOUNT_DIR/dev"
+  run_log_priv "Binding /proc to $IMAGE_MOUNT_DIR/proc" mount -o bind /proc "$IMAGE_MOUNT_DIR/proc"
+  run_log_priv "Binding /sys to $IMAGE_MOUNT_DIR/sys" mount -o bind /sys "$IMAGE_MOUNT_DIR/sys"
   image_dispatch image_install_basic_pkgs
   image_dispatch image_systemd_setup
   image_dispatch image_prepare_fstab
