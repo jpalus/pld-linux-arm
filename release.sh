@@ -206,17 +206,21 @@ image_unmount_fs() {
   fi
 }
 
-image_detach_loop_device() {
-  if [ -n "$IMAGE_LO_DEVICE" ]; then
-    run_log_priv "Delete information about loop device partitions" partx -d $IMAGE_LO_DEVICE
-    run_log_priv "Detaching loop devcie" losetup -d $IMAGE_LO_DEVICE
-    unset IMAGE_LO_DEVICE
+image_detach_device() {
+  if [ -n "$IMAGE_DEVICE" ]; then
+    run_log_priv "Delete information about image device partitions" partx -d $IMAGE_DEVICE
+    case "$IMAGE_DEVICE_TYPE" in
+      loop)
+        run_log_priv "Detaching loop devcie" losetup -d $IMAGE_DEVICE
+        ;;
+    esac
+    unset IMAGE_DEVICE
   fi
 }
 
 image_exit_handler() {
   image_dispatch image_unmount_fs
-  image_dispatch image_detach_loop_device
+  image_dispatch image_detach_device
   if [ -d "$IMAGE_MOUNT_DIR" ]; then
       run_log "Removing temporary mount directory $IMAGE_MOUNT_DIR" rmdir "$IMAGE_MOUNT_DIR"
   fi
@@ -241,21 +245,25 @@ image_prepare_file() {
   run_log "Preparing image file $IMAGE_FILENAME" truncate -s ${IMAGE_SIZE_MB}M "$IMAGE_PATH"
 }
 
-image_create_loop_device() {
-  run_log_priv "Creating loop device" losetup -f "$IMAGE_PATH"
-  IMAGE_LO_DEVICE=$(/sbin/losetup -j "$IMAGE_PATH" | tail -n 1 | cut -f1 -d:)
+image_create_device() {
+  case "$IMAGE_DEVICE_TYPE" in
+    loop)
+      run_log_priv "Creating loop device" losetup -f "$IMAGE_PATH"
+      IMAGE_DEVICE=$(/sbin/losetup -j "$IMAGE_PATH" | tail -n 1 | cut -f1 -d:)
+      ;;
+  esac
 }
 
 image_create_partitions() {
   local part_table next_part_nr=1
   if [ "$IMAGE_EFI_ENABLED" = "1" ]; then
     part_table="${part_table}size=256MiB, type=ef$(printf '\\n')"
-    IMAGE_EFI_DEVICE=${IMAGE_LO_DEVICE}p$next_part_nr
+    IMAGE_EFI_DEVICE=${IMAGE_DEVICE}p$next_part_nr
     next_part_nr=$((next_part_nr + 1))
   fi
   part_table="$part_table- - - *";
-  IMAGE_ROOT_DEVICE=${IMAGE_LO_DEVICE}p$next_part_nr
-  echo "$part_table" | run_log_priv "Creating partition table on $IMAGE_LO_DEVICE" sfdisk -q $IMAGE_LO_DEVICE
+  IMAGE_ROOT_DEVICE=${IMAGE_DEVICE}p$next_part_nr
+  echo "$part_table" | run_log_priv "Creating partition table on $IMAGE_DEVICE" sfdisk -q $IMAGE_DEVICE
 }
 
 image_create_fs() {
@@ -408,13 +416,13 @@ image_setup_params_rpi() {
 }
 
 image_create_partitions_rpi() {
-  run_log_priv "Creating partition table on $IMAGE_LO_DEVICE" sfdisk -q $IMAGE_LO_DEVICE <<EOF 
+  run_log_priv "Creating partition table on $IMAGE_DEVICE" sfdisk -q $IMAGE_DEVICE <<EOF 
 label: dos
 size=256MiB, type=c
 - - - *
 EOF
-  IMAGE_FIRMWARE_DEVICE=${IMAGE_LO_DEVICE}p1
-  IMAGE_ROOT_DEVICE=${IMAGE_LO_DEVICE}p2
+  IMAGE_FIRMWARE_DEVICE=${IMAGE_DEVICE}p1
+  IMAGE_ROOT_DEVICE=${IMAGE_DEVICE}p2
 }
 
 image_create_fs_rpi() {
@@ -462,7 +470,7 @@ image_setup_params_odroid_n2() {
 
 image_install_bootloader_odroid_n2() {
   poldek_install "Installing uboot" --root "$IMAGE_MOUNT_DIR" uboot-image-odroid-n2
-  run_log_priv "Writing uboot image" dd if="$IMAGE_MOUNT_DIR/usr/share/uboot/odroid-n2/u-boot.bin" of="$IMAGE_LO_DEVICE" bs=512 seek=1 conv=notrunc,fsync
+  run_log_priv "Writing uboot image" dd if="$IMAGE_MOUNT_DIR/usr/share/uboot/odroid-n2/u-boot.bin" of="$IMAGE_DEVICE" bs=512 seek=1 conv=notrunc,fsync
 }
 
 image_setup_params_pinebook_pro() {
@@ -478,8 +486,8 @@ image_setup_params_pinebook_pro() {
 
 image_install_bootloader_pbp() {
   poldek_install "Installing uboot" --root "$IMAGE_MOUNT_DIR" uboot-image-pinebook-pro
-  run_log_priv "Writing pre-bootloader image" dd if="$IMAGE_MOUNT_DIR/usr/share/uboot/pinebook-pro-rk3399/idbloader.img" of=$IMAGE_LO_DEVICE seek=64 conv=notrunc,fsync
-  run_log_priv "Writing uboot image" dd if="$IMAGE_MOUNT_DIR/usr/share/uboot/pinebook-pro-rk3399/u-boot.itb" of=$IMAGE_LO_DEVICE seek=16384 conv=notrunc,fsync
+  run_log_priv "Writing pre-bootloader image" dd if="$IMAGE_MOUNT_DIR/usr/share/uboot/pinebook-pro-rk3399/idbloader.img" of=$IMAGE_DEVICE seek=64 conv=notrunc,fsync
+  run_log_priv "Writing uboot image" dd if="$IMAGE_MOUNT_DIR/usr/share/uboot/pinebook-pro-rk3399/u-boot.itb" of=$IMAGE_DEVICE seek=16384 conv=notrunc,fsync
 }
 
 image_install_board_pkgs_pbp() {
@@ -501,9 +509,9 @@ image_create() {
 
   trap image_exit_handler EXIT INT HUP
   image_dispatch image_prepare_file
-  image_dispatch image_create_loop_device
+  image_dispatch image_create_device
   image_dispatch image_create_partitions
-  run_log_priv "Probing for new partitions" partx -a $IMAGE_LO_DEVICE
+  run_log_priv "Probing for new partitions" partx -a $IMAGE_DEVICE
   image_dispatch image_create_fs
   IMAGE_MOUNT_DIR=$(mktemp -d)
   image_dispatch image_mount_fs
@@ -592,6 +600,7 @@ case "$1" in
       create|sign)
         IMAGE_SIZE_MB=1024
         IMAGE_EXT=img
+        IMAGE_DEVICE_TYPE=loop
         case "$3" in
           rpi|odroid-n2|pinebook-pro|qemu)
             check_args_nr 3 "$@"
