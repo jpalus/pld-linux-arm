@@ -52,16 +52,24 @@ error() {
 }
 
 run_log() {
-  local msg="$1"; shift
+  local msg no_error cmd_status
+  if [ "$1" = "-n" ]; then
+    no_error=1; shift
+  fi
+  msg="$1"; shift
   log "Running $@"
   echo -n "$msg..."
   "$@" >> "$LOG_FILE" 2>&1
-  if [ $? -eq 0 ]; then
-    echo "OK"
-  else
-    echo "FAILED"
-    error "Command failed: $@"
+  cmd_status=$?
+  if [ -z "$no_error" ]; then
+    if [ $cmd_status -eq 0 ]; then
+      echo "OK"
+    else
+      echo "FAILED"
+      error "Command failed: $@"
+    fi
   fi
+  return $cmd_status
 }
 
 run_log_priv() {
@@ -69,8 +77,12 @@ run_log_priv() {
     echo "Non-root user detected, using sudo"
     SUDO="sudo"
   fi
-  local msg="$1"; shift
-  run_log "$msg" $SUDO "$@"
+  local msg no_error
+  if [ "$1" = "-n" ]; then
+    no_error=1; shift
+  fi
+  msg="$1"; shift
+  run_log ${no_error:+-n} "$msg" $SUDO "$@"
 }
 
 is_on() {
@@ -213,6 +225,9 @@ image_detach_device() {
       loop)
         run_log_priv "Detaching loop devcie" losetup -d $IMAGE_DEVICE
         ;;
+      qemu-nbd)
+        run_log_priv "Detaching NBD devcie" qemu-nbd -d $IMAGE_DEVICE
+        ;;
     esac
     unset IMAGE_DEVICE
   fi
@@ -254,6 +269,25 @@ image_create_device() {
       fi
       run_log_priv "Creating loop device" losetup -f "$IMAGE_PATH"
       IMAGE_DEVICE=$(/sbin/losetup -j "$IMAGE_PATH" | tail -n 1 | cut -f1 -d:)
+      ;;
+    qemu-nbd)
+      check_dep nbd-client nbd
+      check_dep qemu-nbd qemu-common
+      log "Finding available NBD device"
+      for i in `seq 0 9`; do
+        if [ ! -e /dev/nbd$i ]; then
+          break
+        fi
+        if ! run_log_priv -n "Checking /dev/nbd$i" nbd-client -c /dev/nbd$i > /dev/null; then
+          NBD_DEVICE=/dev/nbd$i
+          break
+        fi
+      done
+      if [ -z "$NBD_DEVICE" ]; then
+        error "Failed to find available NBD device"
+      fi
+      run_log_priv "Creating nbd device" qemu-nbd -c $NBD_DEVICE "$IMAGE_PATH"
+      IMAGE_DEVICE="$NBD_DEVICE"
       ;;
   esac
 }
@@ -502,6 +536,9 @@ image_setup_params_qemu() {
   IMAGE_TYPE=qemu
   IMAGE_NAME=qemu
   IMAGE_DESC="QEMU"
+  IMAGE_FORMAT=qcow2
+  IMAGE_EXT=qcow2
+  IMAGE_DEVICE_TYPE=qemu-nbd
   IMAGE_EFI_ENABLED=1
   IMAGE_INITRD_MODULES="virtio-blk virtio-pci virtio_pci_modern_dev virtio-mmio"
 }
