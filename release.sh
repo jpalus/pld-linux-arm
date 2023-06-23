@@ -249,6 +249,9 @@ image_prepare_file() {
 image_create_device() {
   case "$IMAGE_DEVICE_TYPE" in
     loop)
+      if [ "$IMAGE_FORMAT" != "raw" ]; then
+        error "Only raw images are supported with loop device (image type configured: $IMAGE_FORMAT)"
+      fi
       run_log_priv "Creating loop device" losetup -f "$IMAGE_PATH"
       IMAGE_DEVICE=$(/sbin/losetup -j "$IMAGE_PATH" | tail -n 1 | cut -f1 -d:)
       ;;
