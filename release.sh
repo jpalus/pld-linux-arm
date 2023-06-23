@@ -241,8 +241,9 @@ image_dispatch() {
 image_prepare_file() {
   IMAGE_FILENAME=$IMAGE_NAME-$RELEASE_NAME.$IMAGE_EXT
   IMAGE_PATH=$SCRIPT_DIR/$IMAGE_FILENAME
+  check_dep qemu-img
   echo "Creating boot image for $IMAGE_DESC"
-  run_log "Preparing image file $IMAGE_FILENAME" truncate -s ${IMAGE_SIZE_MB}M "$IMAGE_PATH"
+  run_log "Preparing image file $IMAGE_FILENAME" qemu-img create -f $IMAGE_FORMAT "$IMAGE_PATH" ${IMAGE_SIZE_MB}M
 }
 
 image_create_device() {
@@ -599,6 +600,7 @@ case "$1" in
     case "$2" in
       create|sign)
         IMAGE_SIZE_MB=1024
+        IMAGE_FORMAT=raw
         IMAGE_EXT=img
         IMAGE_DEVICE_TYPE=loop
         case "$3" in
