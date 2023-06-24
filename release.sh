@@ -147,6 +147,13 @@ name = jpalus
 path = http://jpalus.fastmail.com.user.fm/dists/th/PLD/$ARCH/RPMS/
 signed = yes
 EOF
+  run_log_priv "Configuring custom dnf repository" tee "$CHROOT_DIR/etc/dnf/repos.d/jpalus.repo" <<EOF
+[jpalus]
+name=PLD Linux ARM
+baseurl=http://jpalus.fastmail.com.user.fm/dists/th/PLD/$ARCH/RPMS/
+gpgkey=http://jpalus.fastmail.com.user.fm/jpalus.asc
+enabled=1
+EOF
   rpm --root="$CHROOT_DIR" -qa|sort > "$SCRIPT_DIR/$RELEASE_NAME.packages"
   check_dep tar
   check_dep xz
