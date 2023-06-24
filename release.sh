@@ -271,6 +271,7 @@ image_create_device() {
       IMAGE_DEVICE=$(/sbin/losetup -j "$IMAGE_PATH" | tail -n 1 | cut -f1 -d:)
       ;;
     qemu-nbd)
+      test -e /dev/nbd0 || run_log_priv "/dev/nbd0 not present: try loading nbd module" modprobe nbd
       check_dep nbd-client nbd
       check_dep qemu-nbd qemu-common
       log "Finding available NBD device"
