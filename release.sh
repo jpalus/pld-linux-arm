@@ -606,11 +606,11 @@ EOF
 }
 
 image_sign() {
-  if [ ! -f "$SCRIPT_DIR/$IMAGE_NAME-$RELEASE_NAME.img.xz" ]; then
-    error "$SCRIPT_DIR/$IMAGE_NAME-$RELEASE_NAME.img.xz does not exist"
+  if [ ! -f "$SCRIPT_DIR/$IMAGE_NAME-$RELEASE_NAME.$IMAGE_EXT.xz" ]; then
+    error "$SCRIPT_DIR/$IMAGE_NAME-$RELEASE_NAME.$IMAGE_EXT.xz does not exist"
   fi
-  echo "Signing image $IMAGE_NAME-$RELEASE_NAME.img.xz"
-  run_log 'Signing' gpg --sign --armor --detach-sig "$SCRIPT_DIR/$IMAGE_NAME-$RELEASE_NAME.img.xz"
+  echo "Signing image $IMAGE_NAME-$RELEASE_NAME.$IMAGE_EXT.xz"
+  run_log 'Signing' gpg --sign --armor --detach-sig "$SCRIPT_DIR/$IMAGE_NAME-$RELEASE_NAME.$IMAGE_EXT.xz"
 }
 
 update_termux_proot() {
