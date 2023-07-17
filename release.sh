@@ -618,8 +618,13 @@ update_termux_proot() {
 DISTRO_NAME="PLD Linux Distribution"
 TARBALL_URL['aarch64']="$RELEASE_DOWNLOAD_URL/$(release_name aarch64).tar.xz"
 TARBALL_SHA256['aarch64']="$(sha256sum $SCRIPT_DIR/$(release_name aarch64).tar.xz | cut -f1 -d' ')"
+if uname -m | grep -q armv7 && test -e /proc/cpuinfo && grep -q neon /proc/cpuinfo; then
+TARBALL_URL['arm']="$RELEASE_DOWNLOAD_URL/$(release_name armv7hnl).tar.xz"
+TARBALL_SHA256['arm']="$(sha256sum $SCRIPT_DIR/$(release_name armv7hnl).tar.xz | cut -f1 -d' ')"
+else
 TARBALL_URL['arm']="$RELEASE_DOWNLOAD_URL/$(release_name armv6hl).tar.xz"
 TARBALL_SHA256['arm']="$(sha256sum $SCRIPT_DIR/$(release_name armv6hl).tar.xz | cut -f1 -d' ')"
+fi
 EOF
 }
 
