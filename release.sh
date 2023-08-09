@@ -111,9 +111,14 @@ SCRIPT_DIR=$(dirname $(readlink -f "$0"))
 RELEASE_TIMESTAMP=${RELEASE_TIMESTAMP:-$(date +%Y%m%d)}
 RELEASE_NAME=$(release_name)
 DOCKER_REGISTRY=docker.io
-DOCKER_REPO="jpalus/pld-linux-$ARCH"
+DOCKER_REPO_PREFIX="jpalus/pld-linux-"
+DOCKER_REPO="$DOCKER_REPO_PREFIX$ARCH"
 DOCKER_TAG="$DOCKER_REPO:$RELEASE_TIMESTAMP"
 DOCKER_TAG_LATEST="$DOCKER_REPO:latest"
+DOCKER_MULTIARCH_ARCHS="aarch64 armv6hl armv7hnl"
+DOCKER_MULTIARCH_REPO="jpalus/pld-linux-arm"
+DOCKER_MULTIARCH_MANIFEST="$DOCKER_REGISTRY/$DOCKER_MULTIARCH_REPO:$RELEASE_TIMESTAMP"
+DOCKER_MULTIARCH_MANIFEST_LATEST="$DOCKER_REGISTRY/$DOCKER_MULTIARCH_REPO:latest"
 
 DOWNLOAD_URL="https://github.com/jpalus/pld-linux-arm/releases/download"
 RELEASE_DOWNLOAD_URL="https://github.com/jpalus/pld-linux-arm/releases/download/pld-linux-arm-$RELEASE_TIMESTAMP"
@@ -200,6 +205,23 @@ publish_dockerhub() {
   run_log "Tagging docker image $DOCKER_TAG as latest" podman tag $DOCKER_REGISTRY/$DOCKER_TAG $DOCKER_REGISTRY/$DOCKER_TAG_LATEST
   run_log "Pushing docker tag $DOCKER_TAG" podman push -f v2s2 $DOCKER_REGISTRY/$DOCKER_TAG
   run_log "Pushing docker tag $DOCKER_TAG_LATEST" podman push -f v2s2 $DOCKER_REGISTRY/$DOCKER_TAG_LATEST
+}
+
+publish_dockerhub_multiarch() {
+  local arch
+  for arch in $DOCKER_MULTIARCH_ARCHS; do
+    if [ -z "$(podman images -q $DOCKER_REGISTRY/$DOCKER_REPO_PREFIX$arch:$RELEASE_TIMESTAMP)" ]; then
+      error "Image not found: $DOCKER_REGISTRY/$DOCKER_REPO_PREFIX$arch:$RELEASE_TIMESTAMP"
+    fi
+  done
+  echo "Publishing multiarch manifest $DOCKER_MULTIARCH_REPO to Docker Hub"
+  run_log "Creating manifest" podman manifest create $DOCKER_MULTIARCH_MANIFEST
+  for arch in $DOCKER_MULTIARCH_ARCHS; do
+    run_log "Adding $arch image to manifest" podman manifest add $DOCKER_MULTIARCH_MANIFEST $DOCKER_REGISTRY/$DOCKER_REPO_PREFIX$arch:$RELEASE_TIMESTAMP
+  done
+  run_log "Tagging $DOCKER_MULTIARCH_MANIFEST as latest" podman tag $DOCKER_MULTIARCH_MANIFEST $DOCKER_MULTIARCH_MANIFEST_LATEST
+  run_log "Pushing manifest $DOCKER_MULTIARCH_MANIFEST" podman manifest push --all $DOCKER_MULTIARCH_MANIFEST
+  run_log "Pushing manifest $DOCKER_MULTIARCH_MANIFEST_LATEST" podman manifest push --all $DOCKER_MULTIARCH_MANIFEST_LATEST
 }
 
 image_unmount_fs() {
@@ -645,6 +667,11 @@ case "$1" in
         check_args_nr 2 "$@"
         ACTION=$1-$2
         $1_$2
+        ;;
+      dockerhub-multiarch)
+        check_args_nr 2 "$@"
+        ACTION=$1-$2
+        $1_dockerhub_multiarch
         ;;
       *)
         ACTION=unknown
