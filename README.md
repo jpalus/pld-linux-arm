@@ -4,6 +4,7 @@ Tested as primary OS on following devices:
 * aarch64 port
   * *Pinebook Pro*
   * *Odroid N2+*
+  * *Raspberry Pi Zero 2 W*
 
 * armv7hnl port
   * *Raspberry Pi 2*
