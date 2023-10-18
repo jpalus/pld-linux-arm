@@ -504,25 +504,31 @@ image_setup_params_rpi() {
   IMAGE_DISPLAY_ENABLED=1
   IMAGE_SOUND_ENABLED=1
   IMAGE_WIFI_ENABLED=1
+  if [ $ARCH = "aarch64" ]; then
+    IMAGE_EFI_ENABLED=1
+  fi
 }
 
 image_create_partitions_rpi() {
-  run_log_priv "Creating partition table on $IMAGE_DEVICE" sfdisk -q $IMAGE_DEVICE <<EOF 
-label: dos
-size=${FIRMWARE_PART_SIZE_MB}MiB, type=c
-- - - *
-EOF
-  IMAGE_FIRMWARE_DEVICE=${IMAGE_DEVICE}p1
-  IMAGE_ROOT_DEVICE=${IMAGE_DEVICE}p2
+  local part_table next_part_nr=1
+  IMAGE_FIRMWARE_DEVICE=${IMAGE_DEVICE}p$next_part_nr
+  next_part_nr=$((next_part_nr + 1))
+  part_table="label: dos\\nsize=${FIRMWARE_PART_SIZE_MB}MiB, type=c\\n$(image_efi_part)- - - *"
+  if [ $? -eq 0 ]; then
+    IMAGE_EFI_DEVICE=${IMAGE_DEVICE}p$next_part_nr
+    next_part_nr=$((next_part_nr + 1))
+  fi
+  IMAGE_ROOT_DEVICE=${IMAGE_DEVICE}p$next_part_nr
+  printf "$part_table" | run_log_priv "Creating partition table on $IMAGE_DEVICE" sfdisk -q $IMAGE_DEVICE
 }
 
 image_create_fs_rpi() {
   run_log_priv "Creating vfat partition for boot firmware" mkfs.vfat -F 32 -n RPI_FW ${IMAGE_FIRMWARE_DEVICE}
-  run_log_priv "Creating ext4 partition for PLD root" mkfs.ext4 -q -L PLD_ROOT ${IMAGE_ROOT_DEVICE}
+  image_create_fs
 }
 
 image_install_bootloader_rpi() {
-  poldek_install "Installing uboot" --root "$IMAGE_MOUNT_DIR" $(echo "$ARCH" | grep -q armv6 && echo uboot-image-raspberry-pi-zero) $(echo "$ARCH" | grep -q 'armv[67]' && echo uboot-image-raspberry-pi-2)
+  poldek_install "Installing uboot" --root "$IMAGE_MOUNT_DIR" $(echo "$ARCH" | grep -q armv6 && echo uboot-image-raspberry-pi-zero) $(echo "$ARCH" | grep -q 'armv[67]' && echo uboot-image-raspberry-pi-2) $(echo "$ARCH" | grep -q 'aarch64' && echo uboot-image-raspberry-pi-arm64)
   if echo "$ARCH" | grep -q armv6; then
     run_log_priv "Copying uboot image for Raspberry Pi Zero W" cp "$IMAGE_MOUNT_DIR/usr/share/uboot/rpi_0_w/u-boot.bin" "$IMAGE_MOUNT_DIR/boot/firmware/uboot-rpi_0_w.bin"
     run_log_priv "Configuring uboot for Raspberry Pi Zero W" tee -a "$IMAGE_MOUNT_DIR/boot/firmware/config.txt" <<EOF
@@ -536,6 +542,14 @@ EOF
     run_log_priv "Configuring uboot for Raspberry Pi 2" tee -a "$IMAGE_MOUNT_DIR/boot/firmware/config.txt" <<EOF
 [pi2]
 kernel=uboot-rpi_2.bin
+EOF
+  fi
+  if echo "$ARCH" | grep -q 'aarch64'; then
+    image_install_efi_bootloader
+    run_log_priv "Copying uboot image for Raspberry Pi" cp "$IMAGE_MOUNT_DIR/usr/share/uboot/rpi_arm64/u-boot.bin" "$IMAGE_MOUNT_DIR/boot/firmware/uboot.bin"
+    run_log_priv "Configuring uboot for Raspberry Pi" tee -a "$IMAGE_MOUNT_DIR/boot/firmware/config.txt" <<EOF
+kernel=uboot.bin
+arm_64bit=1
 EOF
   fi
   run_log_priv "Configuring common boot params for all Raspberry Pis" tee -a "$IMAGE_MOUNT_DIR/boot/firmware/config.txt" <<EOF
