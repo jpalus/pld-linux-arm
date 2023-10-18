@@ -14,6 +14,8 @@ release_name() {
   echo pld-linux-base-$_arch-$RELEASE_TIMESTAMP
 }
 
+EFI_PART_SIZE_MB=${EFI_PART_SIZE_MB:-256}
+FIRMWARE_PART_SIZE_MB=${FIRMWARE_PART_SIZE_MB:-256}
 RELEASE_NAME=$(release_name)
 DOCKER_REGISTRY=docker.io
 DOCKER_REPO_PREFIX="jpalus/pld-linux-"
@@ -329,7 +331,7 @@ image_create_device() {
 image_create_partitions() {
   local part_table next_part_nr=1
   if [ "$IMAGE_EFI_ENABLED" = "1" ]; then
-    part_table="${part_table}size=256MiB, type=ef$(printf '\\n')"
+    part_table="${part_table}size=${EFI_PART_SIZE_MB}MiB, type=ef$(printf '\\n')"
     IMAGE_EFI_DEVICE=${IMAGE_DEVICE}p$next_part_nr
     next_part_nr=$((next_part_nr + 1))
   fi
@@ -490,7 +492,7 @@ image_setup_params_rpi() {
 image_create_partitions_rpi() {
   run_log_priv "Creating partition table on $IMAGE_DEVICE" sfdisk -q $IMAGE_DEVICE <<EOF 
 label: dos
-size=256MiB, type=c
+size=${FIRMWARE_PART_SIZE_MB}MiB, type=c
 - - - *
 EOF
   IMAGE_FIRMWARE_DEVICE=${IMAGE_DEVICE}p1
