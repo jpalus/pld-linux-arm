@@ -328,22 +328,35 @@ image_create_device() {
   esac
 }
 
+image_efi_part() {
+  if [ "$IMAGE_EFI_ENABLED" = "1" ]; then
+    printf '%s' "size=${EFI_PART_SIZE_MB}MiB, type=ef"'\n'
+    return 0
+  else
+    return 1
+  fi
+}
+
+image_efi_fs() {
+  if [ "$IMAGE_EFI_ENABLED" = "1" ]; then
+    run_log_priv "Formatting EFI system partition" mkfs.vfat -F 32 -n EFI ${IMAGE_EFI_DEVICE}
+  fi
+}
+
 image_create_partitions() {
   local part_table next_part_nr=1
-  if [ "$IMAGE_EFI_ENABLED" = "1" ]; then
-    part_table="${part_table}size=${EFI_PART_SIZE_MB}MiB, type=ef$(printf '\\n')"
+  part_table="${part_table}$(image_efi_part)"
+  if [ $? -eq 0 ]; then
     IMAGE_EFI_DEVICE=${IMAGE_DEVICE}p$next_part_nr
     next_part_nr=$((next_part_nr + 1))
   fi
   part_table="$part_table- - - *";
   IMAGE_ROOT_DEVICE=${IMAGE_DEVICE}p$next_part_nr
-  echo "$part_table" | run_log_priv "Creating partition table on $IMAGE_DEVICE" sfdisk -q $IMAGE_DEVICE
+  printf "$part_table" | run_log_priv "Creating partition table on $IMAGE_DEVICE" sfdisk -q $IMAGE_DEVICE
 }
 
 image_create_fs() {
-  if [ "$IMAGE_EFI_ENABLED" = "1" ]; then
-    run_log_priv "Formatting EFI system partition" mkfs.vfat -F 32 -n EFI ${IMAGE_EFI_DEVICE}
-  fi
+  image_efi_fs
   run_log_priv "Formatting ext4 partition for PLD root" mkfs.ext4 -q -L PLD_ROOT ${IMAGE_ROOT_DEVICE}
 }
 
@@ -419,10 +432,14 @@ $FSTAB
 EOF
 }
 
-image_install_bootloader() {
+image_install_efi_bootloader() {
   if [ "$IMAGE_EFI_ENABLED" = "1" ]; then
     poldek_install "Installing EFI packages" --root "$IMAGE_MOUNT_DIR" grub2-platform-efi
   fi
+}
+
+image_install_bootloader() {
+  image_install_efi_bootloader "$@"
 }
 
 image_setup_bootloader() {
