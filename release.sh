@@ -354,7 +354,9 @@ image_create_partitions() {
   fi
   part_table="$part_table- - - *";
   IMAGE_ROOT_DEVICE=${IMAGE_DEVICE}p$next_part_nr
-  printf "$part_table" | run_log_priv "Creating partition table on $IMAGE_DEVICE" sfdisk -q $IMAGE_DEVICE
+  run_log_priv "Creating partition table on $IMAGE_DEVICE" sfdisk -q $IMAGE_DEVICE <<EOF
+$(printf "$part_table")
+EOF
 }
 
 image_create_fs() {
@@ -521,7 +523,9 @@ image_create_partitions_rpi() {
     next_part_nr=$((next_part_nr + 1))
   fi
   IMAGE_ROOT_DEVICE=${IMAGE_DEVICE}p$next_part_nr
-  printf "$part_table" | run_log_priv "Creating partition table on $IMAGE_DEVICE" sfdisk -q $IMAGE_DEVICE
+  run_log_priv "Creating partition table on $IMAGE_DEVICE" sfdisk -q $IMAGE_DEVICE <<EOF
+$(printf "$part_table")
+EOF
 }
 
 image_create_fs_rpi() {
@@ -634,7 +638,10 @@ image_create() {
   image_dispatch image_install_basic_pkgs
   image_dispatch image_systemd_setup
   image_dispatch image_prepare_fstab
-  echo -e 'pld\npld' | run_log_priv "Setting root password" chroot "$IMAGE_MOUNT_DIR" passwd
+  run_log_priv "Setting root password" chroot "$IMAGE_MOUNT_DIR" passwd <<EOF
+pld
+pld
+EOF
   image_dispatch image_install_bootloader
   image_dispatch image_install_initrd_generator
   image_dispatch image_setup_initrd
