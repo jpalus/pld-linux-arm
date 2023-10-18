@@ -255,7 +255,9 @@ image_unmount_fs() {
 
 image_detach_device() {
   if [ -n "$IMAGE_DEVICE" ]; then
-    run_log_priv "Delete information about image device partitions" partx -d $IMAGE_DEVICE
+    if [ -e "${IMAGE_DEVICE}p1" ]; then
+      run_log_priv "Delete information about image device partitions" partx -d $IMAGE_DEVICE
+    fi
     case "$IMAGE_DEVICE_TYPE" in
       loop)
         run_log_priv "Detaching loop devcie" losetup -d $IMAGE_DEVICE
