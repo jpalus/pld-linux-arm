@@ -1,5 +1,35 @@
 #!/bin/sh
 
+SCRIPT_DIR=$(dirname $(readlink -f "$0"))
+
+RELEASE_TIMESTAMP=${RELEASE_TIMESTAMP:-$(date +%Y%m%d)}
+ARCH=${ARCH:-$(rpm -E %{_host_cpu})}
+
+if [ $? -ne 0 ] || [ -z "$ARCH" ]; then
+  error 'failed to determine arch'
+fi
+
+release_name() {
+  local _arch=${1:-$ARCH}
+  echo pld-linux-base-$_arch-$RELEASE_TIMESTAMP
+}
+
+RELEASE_NAME=$(release_name)
+DOCKER_REGISTRY=docker.io
+DOCKER_REPO_PREFIX="jpalus/pld-linux-"
+DOCKER_REPO="$DOCKER_REPO_PREFIX$ARCH"
+DOCKER_TAG="$DOCKER_REPO:$RELEASE_TIMESTAMP"
+DOCKER_TAG_LATEST="$DOCKER_REPO:latest"
+DOCKER_MULTIARCH_ARCHS="aarch64 armv6hl armv7hnl"
+DOCKER_MULTIARCH_REPO="jpalus/pld-linux-arm"
+DOCKER_MULTIARCH_MANIFEST="$DOCKER_REGISTRY/$DOCKER_MULTIARCH_REPO:$RELEASE_TIMESTAMP"
+DOCKER_MULTIARCH_MANIFEST_LATEST="$DOCKER_REGISTRY/$DOCKER_MULTIARCH_REPO:latest"
+
+DOWNLOAD_URL="https://github.com/jpalus/pld-linux-arm/releases/download"
+RELEASE_DOWNLOAD_URL="https://github.com/jpalus/pld-linux-arm/releases/download/pld-linux-arm-$RELEASE_TIMESTAMP"
+
+BASIC_PKGS="bzip2 dhcp-client e2fsprogs gzip iproute2 less lz4 openssh-clients openssh-server ping shadow sudo systemd systemd-init tar unzip wget xz"
+
 poldek_install() {
   local cmd msg="$1"; shift
   if [ $# -ge 2 ] && [ "$1" = "--root" ]; then
@@ -95,35 +125,6 @@ is_on() {
       ;;
   esac
 }
-
-release_name() {
-  local _arch=${1:-$ARCH}
-  echo pld-linux-base-$_arch-$RELEASE_TIMESTAMP
-}
-
-ARCH=${ARCH:-$(rpm -E %{_host_cpu})}
-
-if [ $? -ne 0 ] || [ -z "$ARCH" ]; then
-  error 'failed to determine arch'
-fi
-
-SCRIPT_DIR=$(dirname $(readlink -f "$0"))
-RELEASE_TIMESTAMP=${RELEASE_TIMESTAMP:-$(date +%Y%m%d)}
-RELEASE_NAME=$(release_name)
-DOCKER_REGISTRY=docker.io
-DOCKER_REPO_PREFIX="jpalus/pld-linux-"
-DOCKER_REPO="$DOCKER_REPO_PREFIX$ARCH"
-DOCKER_TAG="$DOCKER_REPO:$RELEASE_TIMESTAMP"
-DOCKER_TAG_LATEST="$DOCKER_REPO:latest"
-DOCKER_MULTIARCH_ARCHS="aarch64 armv6hl armv7hnl"
-DOCKER_MULTIARCH_REPO="jpalus/pld-linux-arm"
-DOCKER_MULTIARCH_MANIFEST="$DOCKER_REGISTRY/$DOCKER_MULTIARCH_REPO:$RELEASE_TIMESTAMP"
-DOCKER_MULTIARCH_MANIFEST_LATEST="$DOCKER_REGISTRY/$DOCKER_MULTIARCH_REPO:latest"
-
-DOWNLOAD_URL="https://github.com/jpalus/pld-linux-arm/releases/download"
-RELEASE_DOWNLOAD_URL="https://github.com/jpalus/pld-linux-arm/releases/download/pld-linux-arm-$RELEASE_TIMESTAMP"
-
-BASIC_PKGS="bzip2 dhcp-client e2fsprogs gzip iproute2 less lz4 openssh-clients openssh-server ping shadow sudo systemd systemd-init tar unzip wget xz"
 
 create() {
   echo "Creating release $RELEASE_NAME"
