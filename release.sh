@@ -555,6 +555,7 @@ EOF
   run_log_priv "Configuring common boot params for all Raspberry Pis" tee -a "$IMAGE_MOUNT_DIR/boot/firmware/config.txt" <<EOF
 [all]
 upstream_kernel=1
+enable_uart=1
 EOF
 }
 
