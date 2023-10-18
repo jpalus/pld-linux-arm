@@ -535,6 +535,7 @@ image_install_bootloader_rpi() {
 [pi0w]
 kernel=uboot-rpi_0_w.bin
 enable_uart=1
+gpu_mem=32
 EOF
   fi
   if echo "$ARCH" | grep -q 'armv[67]'; then
