@@ -330,6 +330,24 @@ image_create_device() {
   esac
 }
 
+image_offset_part() {
+  if [ -n "$FIRST_PART_OFFSET" ]; then
+    printf '%s : %s' "$1" "size=$FIRST_PART_OFFSET"'\n'
+    return 0
+  else
+    return 1
+  fi
+}
+
+image_remove_offset_part() {
+  if [ -n "$FIRST_PART_OFFSET" ]; then
+    run_log_priv "Removing offset partition" sfdisk --delete $(echo $1 | sed 's/p[0-9]*$//') $(echo $1 | sed 's/.*p\([0-9]*\)$/\1/')
+    return 0
+  else
+    return 1
+  fi
+}
+
 image_efi_part() {
   if [ "$IMAGE_EFI_ENABLED" = "1" ]; then
     printf '%s : %s' $1 "size=${EFI_PART_SIZE_MB}MiB, type=ef"'\n'
@@ -354,9 +372,13 @@ image_create_partitions() {
   fi
   part_table="$part_table${IMAGE_DEVICE}p$next_part_nr : size=+, bootable";
   IMAGE_ROOT_DEVICE=${IMAGE_DEVICE}p$next_part_nr
+  next_part_nr=$((next_part_nr + 1))
+  OFFSET_DEVICE=${IMAGE_DEVICE}p$next_part_nr
+  part_table="$(image_offset_part $OFFSET_DEVICE)${part_table}"
   run_log_priv "Creating partition table on $IMAGE_DEVICE" sfdisk -q $IMAGE_DEVICE <<EOF
 $(printf "$part_table")
 EOF
+  image_remove_offset_part $OFFSET_DEVICE
 }
 
 image_create_fs() {
@@ -517,16 +539,20 @@ image_create_partitions_rpi() {
   local part_table next_part_nr=1
   IMAGE_FIRMWARE_DEVICE=${IMAGE_DEVICE}p$next_part_nr
   next_part_nr=$((next_part_nr + 1))
-  part_table="label: dos\\n${IMAGE_FIRMWARE_DEVICE} : size=${FIRMWARE_PART_SIZE_MB}MiB, type=c\\n$(image_efi_part ${IMAGE_DEVICE}p$next_part_nr)"
+  part_table="${IMAGE_FIRMWARE_DEVICE} : size=${FIRMWARE_PART_SIZE_MB}MiB, type=c\\n$(image_efi_part ${IMAGE_DEVICE}p$next_part_nr)"
   if [ $? -eq 0 ]; then
     IMAGE_EFI_DEVICE=${IMAGE_DEVICE}p$next_part_nr
     next_part_nr=$((next_part_nr + 1))
   fi
   IMAGE_ROOT_DEVICE=${IMAGE_DEVICE}p$next_part_nr
   part_table="$part_table\\n$IMAGE_ROOT_DEVICE : size=+, bootable"
+  next_part_nr=$((next_part_nr + 1))
+  OFFSET_DEVICE=${IMAGE_DEVICE}p$next_part_nr
+  part_table="$(image_offset_part $OFFSET_DEVICE)${part_table}"
   run_log_priv "Creating partition table on $IMAGE_DEVICE" sfdisk -q $IMAGE_DEVICE <<EOF
 $(printf "$part_table")
 EOF
+  image_remove_offset_part $OFFSET_DEVICE
 }
 
 image_create_fs_rpi() {
