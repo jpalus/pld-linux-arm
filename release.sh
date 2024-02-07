@@ -622,6 +622,7 @@ image_setup_params_pinebook_pro() {
   IMAGE_DISPLAY_ENABLED=1
   IMAGE_SOUND_ENABLED=1
   IMAGE_WIFI_ENABLED=1
+  FIRST_PART_OFFSET=10MiB
 }
 
 image_install_bootloader_pbp() {
