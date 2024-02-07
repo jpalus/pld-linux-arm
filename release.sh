@@ -332,7 +332,7 @@ image_create_device() {
 
 image_efi_part() {
   if [ "$IMAGE_EFI_ENABLED" = "1" ]; then
-    printf '%s' "size=${EFI_PART_SIZE_MB}MiB, type=ef"'\n'
+    printf '%s : %s' $1 "size=${EFI_PART_SIZE_MB}MiB, type=ef"'\n'
     return 0
   else
     return 1
@@ -347,12 +347,12 @@ image_efi_fs() {
 
 image_create_partitions() {
   local part_table next_part_nr=1
-  part_table="${part_table}$(image_efi_part)"
+  part_table="${part_table}$(image_efi_part ${IMAGE_DEVICE}p$next_part_nr)"
   if [ $? -eq 0 ]; then
     IMAGE_EFI_DEVICE=${IMAGE_DEVICE}p$next_part_nr
     next_part_nr=$((next_part_nr + 1))
   fi
-  part_table="$part_table- - - *";
+  part_table="$part_table${IMAGE_DEVICE}p$next_part_nr : size=+, bootable";
   IMAGE_ROOT_DEVICE=${IMAGE_DEVICE}p$next_part_nr
   run_log_priv "Creating partition table on $IMAGE_DEVICE" sfdisk -q $IMAGE_DEVICE <<EOF
 $(printf "$part_table")
@@ -517,12 +517,13 @@ image_create_partitions_rpi() {
   local part_table next_part_nr=1
   IMAGE_FIRMWARE_DEVICE=${IMAGE_DEVICE}p$next_part_nr
   next_part_nr=$((next_part_nr + 1))
-  part_table="label: dos\\nsize=${FIRMWARE_PART_SIZE_MB}MiB, type=c\\n$(image_efi_part)- - - *"
+  part_table="label: dos\\n${IMAGE_FIRMWARE_DEVICE} : size=${FIRMWARE_PART_SIZE_MB}MiB, type=c\\n$(image_efi_part ${IMAGE_DEVICE}p$next_part_nr)"
   if [ $? -eq 0 ]; then
     IMAGE_EFI_DEVICE=${IMAGE_DEVICE}p$next_part_nr
     next_part_nr=$((next_part_nr + 1))
   fi
   IMAGE_ROOT_DEVICE=${IMAGE_DEVICE}p$next_part_nr
+  part_table="$part_table\\n$IMAGE_ROOT_DEVICE : size=+, bootable"
   run_log_priv "Creating partition table on $IMAGE_DEVICE" sfdisk -q $IMAGE_DEVICE <<EOF
 $(printf "$part_table")
 EOF
