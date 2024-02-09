@@ -227,6 +227,15 @@ publish_dockerhub_multiarch() {
   run_log "Pushing manifest $DOCKER_MULTIARCH_MANIFEST_LATEST" podman manifest push --all $DOCKER_MULTIARCH_MANIFEST_LATEST
 }
 
+publish_github() {
+  if [ -n "$1" ]; then
+    RELEASE_NOTES_FILE="$1"
+  elif [ -f "release-notes-$RELEASE_TIMESTAMP" ]; then
+    RELEASE_NOTES_FILE="release-notes-$RELEASE_TIMESTAMP"
+  fi
+  run_log "Publishing release to GitHub" gh release create -d -t pld-linux-arm-$RELEASE_TIMESTAMP ${RELEASE_NOTES_FILE:+-F $RELEASE_NOTES_FILE} pld-linux-arm-$RELEASE_TIMESTAMP *$RELEASE_TIMESTAMP*{xz,asc,packages}
+}
+
 image_unmount_fs() {
   if [ -n "$IMAGE_MOUNT_DIR" ] && [ -d "$IMAGE_MOUNT_DIR" ]; then
     if [ -d "$IMAGE_MOUNT_DIR/boot/efi" ] && mountpoint -q "$IMAGE_MOUNT_DIR/boot/efi"; then
@@ -745,6 +754,11 @@ case "$1" in
         check_args_nr 2 "$@"
         ACTION=$1-$2
         $1_dockerhub_multiarch
+        ;;
+      github)
+        ACTION=$1-$2
+        shift 2
+        $1_github "$@"
         ;;
       *)
         ACTION=unknown
