@@ -478,15 +478,19 @@ image_install_bootloader() {
 }
 
 image_setup_bootloader() {
-  local efi_target
+  local efi_target kaslrseed
 
   run_log_priv "Creating /boot/extlinux directory" install -d "$IMAGE_MOUNT_DIR/boot/extlinux"
+  if [ "$ARCH" = "aarch64" ]; then
+    kaslrseed=kaslrseed
+  fi
   run_log_priv "Configuring uboot extlinux entry" tee -a "$IMAGE_MOUNT_DIR/boot/extlinux/extlinux.conf" <<EOF
 menu title PLD Boot Menu
 default PLD
 timeout 20
 label PLD
   menu label PLD
+  $kaslrseed
   kernel /boot/vmlinuz
   append root=$(_part_id $IMAGE_ROOT_DEVICE) rw $IMAGE_BOOT_PARAMS
   initrd /boot/initrd
