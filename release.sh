@@ -232,7 +232,7 @@ publish_github() {
   elif [ -f "release-notes-$RELEASE_TIMESTAMP" ]; then
     RELEASE_NOTES_FILE="release-notes-$RELEASE_TIMESTAMP"
   fi
-  run_log "Publishing release to GitHub" gh release create -d -t pld-linux-arm-$RELEASE_TIMESTAMP ${RELEASE_NOTES_FILE:+-F $RELEASE_NOTES_FILE} pld-linux-arm-$RELEASE_TIMESTAMP *$RELEASE_TIMESTAMP*{xz,asc,packages}
+  run_log "Publishing release to GitHub" gh release create -d -t pld-linux-arm-$RELEASE_TIMESTAMP ${RELEASE_NOTES_FILE:+-F $RELEASE_NOTES_FILE} pld-linux-arm-$RELEASE_TIMESTAMP $(find $SCRIPT_DIR -name "*$RELEASE_TIMESTAMP*xz" -o -name "*$RELEASE_TIMESTAMP*asc" -o -name "*$RELEASE_TIMESTAMP*packages")
 }
 
 image_unmount_fs() {
@@ -757,7 +757,7 @@ case "$1" in
       github)
         ACTION=$1-$2
         shift 2
-        $1_github "$@"
+        publish_github "$@"
         ;;
       *)
         ACTION=unknown
