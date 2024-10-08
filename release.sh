@@ -18,10 +18,6 @@ EFI_PART_SIZE_MB=${EFI_PART_SIZE_MB:-128}
 FIRMWARE_PART_SIZE_MB=${FIRMWARE_PART_SIZE_MB:-128}
 RELEASE_NAME=$(release_name)
 DOCKER_REGISTRY=docker.io
-DOCKER_REPO_PREFIX="jpalus/pld-linux-"
-DOCKER_REPO="$DOCKER_REPO_PREFIX$ARCH"
-DOCKER_TAG="$DOCKER_REPO:$RELEASE_TIMESTAMP"
-DOCKER_TAG_LATEST="$DOCKER_REPO:latest"
 DOCKER_MULTIARCH_ARCHS="aarch64 armv6hl armv7hnl"
 DOCKER_MULTIARCH_REPO="jpalus/pld-linux-arm"
 DOCKER_MULTIARCH_MANIFEST="$DOCKER_REGISTRY/$DOCKER_MULTIARCH_REPO:$RELEASE_TIMESTAMP"
@@ -185,42 +181,45 @@ sign() {
   run_log 'Signing' gpg --sign --armor --detach-sig "$SCRIPT_DIR/$RELEASE_NAME.tar.xz"
 }
 
-publish_dockerhub() {
-  if [ ! -f "$SCRIPT_DIR/$RELEASE_NAME.tar.xz" ]; then
-    error "$SCRIPT_DIR/$RELEASE_NAME.tar.xz does not exist"
-  fi
-  echo "Publishing release $RELEASE_NAME to Docker Hub"
-  case "$ARCH" in
+image_arch() {
+  case "$1" in
     aarch64)
-      IMAGE_ARCH=arm64
-      IMAGE_VARIANT=
+      echo arm64
       ;;
-    armv6*)
-      IMAGE_ARCH=arm
-      IMAGE_VARIANT=v6
-      ;;
-    armv7*)
-      IMAGE_ARCH=arm
-      IMAGE_VARIANT=v7
+    arm*)
+      echo arm
       ;;
   esac
-  xz -dc < "$SCRIPT_DIR/$RELEASE_NAME.tar.xz" | run_log "Importing docker image $DOCKER_TAG" podman import --os linux --arch $IMAGE_ARCH ${IMAGE_VARIANT:+--variant $IMAGE_VARIANT} - $DOCKER_REGISTRY/$DOCKER_TAG
-  run_log "Tagging docker image $DOCKER_TAG as latest" podman tag $DOCKER_REGISTRY/$DOCKER_TAG $DOCKER_REGISTRY/$DOCKER_TAG_LATEST
-  run_log "Pushing docker tag $DOCKER_TAG" podman push -f v2s2 $DOCKER_REGISTRY/$DOCKER_TAG
-  run_log "Pushing docker tag $DOCKER_TAG_LATEST" podman push -f v2s2 $DOCKER_REGISTRY/$DOCKER_TAG_LATEST
+}
+
+image_variant() {
+  case "$1" in
+    armv6*)
+      echo v6
+      ;;
+    armv7*)
+      echo v7
+      ;;
+  esac
 }
 
 publish_dockerhub_multiarch() {
   local arch
   for arch in $DOCKER_MULTIARCH_ARCHS; do
-    if [ -z "$(podman images -q $DOCKER_REGISTRY/$DOCKER_REPO_PREFIX$arch:$RELEASE_TIMESTAMP)" ]; then
-      error "Image not found: $DOCKER_REGISTRY/$DOCKER_REPO_PREFIX$arch:$RELEASE_TIMESTAMP"
+    if [ ! -f "$SCRIPT_DIR/$(release_name $arch).tar.xz" ]; then
+      error "$SCRIPT_DIR/$(release_name $arch).tar.xz does not exist"
     fi
   done
   echo "Publishing multiarch manifest $DOCKER_MULTIARCH_REPO to Docker Hub"
   run_log "Creating manifest" podman manifest create $DOCKER_MULTIARCH_MANIFEST
   for arch in $DOCKER_MULTIARCH_ARCHS; do
-    run_log "Adding $arch image to manifest" podman manifest add $DOCKER_MULTIARCH_MANIFEST $DOCKER_REGISTRY/$DOCKER_REPO_PREFIX$arch:$RELEASE_TIMESTAMP
+    variant=$(image_variant $arch)
+    echo "Importing image for $arch"
+    image_id=$(xz -dc < "$SCRIPT_DIR/$(release_name $arch).tar.xz" | podman import -q --os linux --arch $(image_arch $arch) ${variant:+--variant $variant} -)
+    if [ $? -ne 0 ]; then
+      error $image_id
+    fi
+    run_log "Adding $arch image to manifest" podman manifest add $DOCKER_MULTIARCH_MANIFEST $image_id
   done
   run_log "Tagging $DOCKER_MULTIARCH_MANIFEST as latest" podman tag $DOCKER_MULTIARCH_MANIFEST $DOCKER_MULTIARCH_MANIFEST_LATEST
   run_log "Pushing manifest $DOCKER_MULTIARCH_MANIFEST" podman manifest push --all $DOCKER_MULTIARCH_MANIFEST
@@ -739,8 +738,9 @@ EOF
 case "$1" in
   -c)
     shift
-    echo Running in container: $DOCKER_TAG_LATEST
-    exec podman run --cap-add SYS_CHROOT --rm -t -a=stdin -a=stderr -a=stdout -e ARCH=$ARCH -e PLD_ARM_IN_CONTAINER=1 -e RELEASE_TIMESTAMP=$RELEASE_TIMESTAMP -v="$SCRIPT_DIR:/pld-linux-arm" $DOCKER_TAG_LATEST "/pld-linux-arm/$(basename $0)" "$@"
+    echo Running in container: $DOCKER_MULTIARCH_REPO
+    variant=$(image_variant $ARCH)
+    exec podman run --arch $(image_arch $ARCH) ${variant:+--variant $variant} --cap-add SYS_CHROOT --rm -t -a=stdin -a=stderr -a=stdout -e ARCH=$ARCH -e PLD_ARM_IN_CONTAINER=1 -e RELEASE_TIMESTAMP=$RELEASE_TIMESTAMP -v="$SCRIPT_DIR:/pld-linux-arm" $DOCKER_MULTIARCH_MANIFEST_LATEST "/pld-linux-arm/$(basename $0)" "$@"
     ;;
   create|sign)
     check_args_nr 1 "$@"
@@ -749,11 +749,6 @@ case "$1" in
     ;;
   publish)
     case "$2" in
-      dockerhub)
-        check_args_nr 2 "$@"
-        ACTION=$1-$2
-        $1_$2
-        ;;
       dockerhub-multiarch)
         check_args_nr 2 "$@"
         ACTION=$1-$2
