@@ -1,5 +1,7 @@
 pld-linux-base-*.packages
 pld-linux-base-*.log
 pld-linux-base-*.tar.xz
+release-notes-*
 *.img.xz
+*.qcow2.xz
 *.asc
