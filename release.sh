@@ -658,6 +658,27 @@ image_setup_params_qemu() {
   IMAGE_INITRD_MODULES="virtio-blk virtio-pci virtio_pci_modern_dev virtio-mmio"
 }
 
+image_setup_params_rock5b() {
+  IMAGE_TYPE=rock5b
+  IMAGE_NAME=rock5b
+  IMAGE_DESC="Radxa Rock 5B"
+  IMAGE_BOOT_PARAMS="earlycon console=ttyS2,1500000n8 console=tty1"
+  IMAGE_INITRD_MODULES="8250_dw pwm_rockchip fixed rk808_regulator rk8xx_spi spi_rockchip fan53555 pinctrl_rockchip pl330 i2c_rk3x gpio_rockchip scmi_module clk-scmi scmi_transport_smc cpufreq-dt  rockchipdrm phy_rockchip_samsung_hdptx rtc_hym8563 sdhci_of_dwcmshc rockchip_saradc dw_mmc_rockchip rk805_pwrkey  xhci_plat_hcd ehci-platform ohci-platform phy_rockchip_inno_usb2 phy_rockchip_usbdp dwc3 phy_rockchip_snps_pcie3 phy_rockchip_naneng_combphy mmc_block uas nvme"
+  IMAGE_DISPLAY_ENABLED=1
+  IMAGE_SOUND_ENABLED=1
+  FIRST_PART_OFFSET=10MiB
+}
+
+image_install_bootloader_rock5b() {
+  poldek_install "Installing uboot" --root "$IMAGE_MOUNT_DIR" uboot-image-rock5b
+  run_log_priv "Writing pre-bootloader image" dd if="$IMAGE_MOUNT_DIR/usr/share/uboot/rock5b-rk3588/idbloader.img" of=$IMAGE_DEVICE seek=64 conv=notrunc,fsync
+  run_log_priv "Writing uboot image" dd if="$IMAGE_MOUNT_DIR/usr/share/uboot/rock5b-rk3588/u-boot.itb" of=$IMAGE_DEVICE seek=16384 conv=notrunc,fsync
+}
+
+image_install_board_pkgs_rock5b() {
+  poldek_install "Installing linux-firmware-arm linux-firmware-realtek" --root "$IMAGE_MOUNT_DIR" linux-firmware-arm linux-firmware-realtek
+}
+
 image_create() {
   if [ ! -f "$SCRIPT_DIR/$RELEASE_NAME.tar.xz" ]; then
     error "$SCRIPT_DIR/$RELEASE_NAME.tar.xz does not exist"
@@ -773,7 +794,7 @@ case "$1" in
         IMAGE_EXT=img
         IMAGE_DEVICE_TYPE=loop
         case "$3" in
-          rpi|odroid-n2|pinebook-pro|qemu)
+          rpi|odroid-n2|pinebook-pro|qemu|rock5b)
             check_args_nr 3 "$@"
             ACTION=$1-$2-$3
             eval image_setup_params_$(echo $3|tr - _)
