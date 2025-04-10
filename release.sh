@@ -663,7 +663,7 @@ image_setup_params_rock5b() {
   IMAGE_NAME=rock5b
   IMAGE_DESC="Radxa Rock 5B"
   IMAGE_BOOT_PARAMS="earlycon console=ttyS2,1500000n8 console=tty1"
-  IMAGE_INITRD_MODULES="8250_dw pwm_rockchip fixed rk808_regulator rk8xx_spi spi_rockchip fan53555 pinctrl_rockchip pl330 i2c_rk3x gpio_rockchip scmi_module clk-scmi scmi_transport_smc cpufreq-dt  rockchipdrm phy_rockchip_samsung_hdptx rtc_hym8563 sdhci_of_dwcmshc rockchip_saradc dw_mmc_rockchip rk805_pwrkey  xhci_plat_hcd ehci-platform ohci-platform phy_rockchip_inno_usb2 phy_rockchip_usbdp dwc3 phy_rockchip_snps_pcie3 phy_rockchip_naneng_combphy mmc_block uas nvme"
+  IMAGE_INITRD_MODULES="8250_dw pwm_rockchip fixed rk808_regulator rk8xx_spi spi_rockchip fan53555 pinctrl_rockchip pl330 i2c_rk3x gpio_rockchip scmi_module clk-scmi scmi_transport_smc cpufreq-dt  rockchipdrm phy_rockchip_samsung_hdptx rtc_hym8563 sdhci_of_dwcmshc rockchip_saradc dw_mmc_rockchip rk805_pwrkey  xhci_plat_hcd ehci-platform ohci-platform phy_rockchip_inno_usb2 phy_rockchip_usbdp dwc3 phy_rockchip_snps_pcie3 phy_rockchip_naneng_combphy arm_smmu_v3 mmc_block uas nvme"
   IMAGE_DISPLAY_ENABLED=1
   IMAGE_SOUND_ENABLED=1
   FIRST_PART_OFFSET=10MiB
