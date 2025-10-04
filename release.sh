@@ -658,6 +658,10 @@ image_setup_params_qemu() {
   IMAGE_INITRD_MODULES="virtio-blk virtio-pci virtio_pci_modern_dev virtio-mmio"
 }
 
+image_install_board_pkgs_qemu() {
+  poldek_install "Installing qemu-guest-agent" --root "$IMAGE_MOUNT_DIR" qemu-guest-agent
+}
+
 image_setup_params_rock5b() {
   IMAGE_TYPE=rock5b
   IMAGE_NAME=rock5b
