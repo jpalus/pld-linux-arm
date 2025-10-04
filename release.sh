@@ -27,6 +27,7 @@ DOWNLOAD_URL="https://github.com/jpalus/pld-linux-arm/releases/download"
 RELEASE_DOWNLOAD_URL="https://github.com/jpalus/pld-linux-arm/releases/download/pld-linux-arm-$RELEASE_TIMESTAMP"
 
 BASIC_PKGS="bzip2 dhcp-client e2fsprogs gzip iproute2 less lz4 openssh-clients openssh-server ping shadow sudo systemd systemd-init tar unzip wget xz"
+IGNORE_PKGS="SysVinit,dev,vserver-packages"
 
 poldek_install() {
   local cmd msg="$1"; shift
@@ -37,7 +38,7 @@ poldek_install() {
     cmd="run_log"
   fi
 
-  run_log_priv "$msg" $CHROOT poldek -n jpalus -n th -n th-ready -n th-test -uv --noask --pmopt='--define=_excludedocs\ 1' --pmopt='--define=_install_langs\ %{nil}' "$@"
+  run_log_priv "$msg" $CHROOT poldek -n jpalus -n th -n th-ready -n th-test -uv --noask --ignore="$IGNORE_PKGS" --pmopt='--define=_excludedocs\ 1' --pmopt='--define=_install_langs\ %{nil}' "$@"
 }
 
 check_args_nr() {
