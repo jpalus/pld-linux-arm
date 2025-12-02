@@ -2,6 +2,19 @@
 
 SCRIPT_DIR=$(dirname $(readlink -f "$0"))
 
+EFI_PART_SIZE_MB=${EFI_PART_SIZE_MB:-128}
+FIRMWARE_PART_SIZE_MB=${FIRMWARE_PART_SIZE_MB:-128}
+DOCKER_REGISTRY=docker.io
+DOCKER_MULTIARCH_ARCHS="aarch64 armv6hl armv7hnl"
+DOCKER_MULTIARCH_REPO="jpalus/pld-linux-arm"
+DOCKER_MULTIARCH_MANIFEST="$DOCKER_REGISTRY/$DOCKER_MULTIARCH_REPO"
+
+DOWNLOAD_URL="https://github.com/jpalus/pld-linux-arm/releases/download"
+RELEASE_DOWNLOAD_URL="https://github.com/jpalus/pld-linux-arm/releases/download/pld-linux-arm-$RELEASE_TIMESTAMP"
+
+BASIC_PKGS="bzip2 dhcp-client e2fsprogs gzip iproute2 less lz4 openssh-clients openssh-server ping shadow sudo systemd systemd-init tar unzip wget xz"
+IGNORE_PKGS="SysVinit,dev,vserver-packages"
+
 RELEASE_TIMESTAMP=${RELEASE_TIMESTAMP:-$(date +%Y%m%d)}
 ARCH=${ARCH:-$(rpm -E %{_host_cpu})}
 
@@ -14,20 +27,7 @@ release_name() {
   echo pld-linux-base-$_arch-$RELEASE_TIMESTAMP
 }
 
-EFI_PART_SIZE_MB=${EFI_PART_SIZE_MB:-128}
-FIRMWARE_PART_SIZE_MB=${FIRMWARE_PART_SIZE_MB:-128}
 RELEASE_NAME=$(release_name)
-DOCKER_REGISTRY=docker.io
-DOCKER_MULTIARCH_ARCHS="aarch64 armv6hl armv7hnl"
-DOCKER_MULTIARCH_REPO="jpalus/pld-linux-arm"
-DOCKER_MULTIARCH_MANIFEST="$DOCKER_REGISTRY/$DOCKER_MULTIARCH_REPO:$RELEASE_TIMESTAMP"
-DOCKER_MULTIARCH_MANIFEST_LATEST="$DOCKER_REGISTRY/$DOCKER_MULTIARCH_REPO:latest"
-
-DOWNLOAD_URL="https://github.com/jpalus/pld-linux-arm/releases/download"
-RELEASE_DOWNLOAD_URL="https://github.com/jpalus/pld-linux-arm/releases/download/pld-linux-arm-$RELEASE_TIMESTAMP"
-
-BASIC_PKGS="bzip2 dhcp-client e2fsprogs gzip iproute2 less lz4 openssh-clients openssh-server ping shadow sudo systemd systemd-init tar unzip wget xz"
-IGNORE_PKGS="SysVinit,dev,vserver-packages"
 
 poldek_install() {
   local cmd msg="$1"; shift
@@ -212,7 +212,7 @@ publish_dockerhub_multiarch() {
     fi
   done
   echo "Publishing multiarch manifest $DOCKER_MULTIARCH_REPO to Docker Hub"
-  run_log "Creating manifest" podman manifest create $DOCKER_MULTIARCH_MANIFEST
+  run_log "Creating manifest" podman manifest create $DOCKER_MULTIARCH_MANIFEST:$RELEASE_TIMESTAMP
   for arch in $DOCKER_MULTIARCH_ARCHS; do
     variant=$(image_variant $arch)
     echo "Importing image for $arch"
@@ -220,11 +220,11 @@ publish_dockerhub_multiarch() {
     if [ $? -ne 0 ]; then
       error $image_id
     fi
-    run_log "Adding $arch image to manifest" podman manifest add $DOCKER_MULTIARCH_MANIFEST $image_id
+    run_log "Adding $arch image to manifest" podman manifest add $DOCKER_MULTIARCH_MANIFEST:$RELEASE_TIMESTAMP $image_id
   done
-  run_log "Tagging $DOCKER_MULTIARCH_MANIFEST as latest" podman tag $DOCKER_MULTIARCH_MANIFEST $DOCKER_MULTIARCH_MANIFEST_LATEST
-  run_log "Pushing manifest $DOCKER_MULTIARCH_MANIFEST" podman manifest push --all $DOCKER_MULTIARCH_MANIFEST
-  run_log "Pushing manifest $DOCKER_MULTIARCH_MANIFEST_LATEST" podman manifest push --all $DOCKER_MULTIARCH_MANIFEST_LATEST
+  run_log "Tagging $DOCKER_MULTIARCH_MANIFEST:$RELEASE_TIMESTAMP as latest" podman tag $DOCKER_MULTIARCH_MANIFEST:$RELEASE_TIMESTAMP $DOCKER_MULTIARCH_MANIFEST:latest
+  run_log "Pushing manifest $DOCKER_MULTIARCH_MANIFEST:$RELEASE_TIMESTAMP" podman manifest push --all $DOCKER_MULTIARCH_MANIFEST:$RELEASE_TIMESTAMP
+  run_log "Pushing manifest $DOCKER_MULTIARCH_MANIFEST:latest" podman manifest push --all $DOCKER_MULTIARCH_MANIFEST:latest
 }
 
 publish_github() {
@@ -766,7 +766,7 @@ case "$1" in
     shift
     echo Running in container: $DOCKER_MULTIARCH_REPO
     variant=$(image_variant $ARCH)
-    exec podman run --arch $(image_arch $ARCH) ${variant:+--variant $variant} --cap-add SYS_CHROOT --rm -t -a=stdin -a=stderr -a=stdout -e ARCH=$ARCH -e PLD_ARM_IN_CONTAINER=1 -e RELEASE_TIMESTAMP=$RELEASE_TIMESTAMP -v="$SCRIPT_DIR:/pld-linux-arm" $DOCKER_MULTIARCH_MANIFEST_LATEST "/pld-linux-arm/$(basename $0)" "$@"
+    exec podman run --arch $(image_arch $ARCH) ${variant:+--variant $variant} --cap-add SYS_CHROOT --rm -t -a=stdin -a=stderr -a=stdout -e ARCH=$ARCH -e PLD_ARM_IN_CONTAINER=1 -e RELEASE_TIMESTAMP=$RELEASE_TIMESTAMP -v="$SCRIPT_DIR:/pld-linux-arm" $DOCKER_MULTIARCH_MANIFEST:latest "/pld-linux-arm/$(basename $0)" "$@"
     ;;
   create|sign)
     check_args_nr 1 "$@"
