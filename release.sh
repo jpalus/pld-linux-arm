@@ -2,6 +2,8 @@
 
 SCRIPT_DIR=$(dirname $(readlink -f "$0"))
 
+JPALUS_GPG_KEY_FINGERPRINT=7D4F29DD11CB9CAEBA20E59FEA3B49141E88A192
+
 EFI_PART_SIZE_MB=${EFI_PART_SIZE_MB:-128}
 FIRMWARE_PART_SIZE_MB=${FIRMWARE_PART_SIZE_MB:-128}
 DOCKER_REGISTRY=docker.io
@@ -125,6 +127,21 @@ is_on() {
   esac
 }
 
+import_gpg_key() {
+  local key_location="$1" fingerprint="$2" installed_pubkey
+  check_dep gpg gnupg2
+  case "$key_location" in
+    http://*|https://*)
+      check_dep curl
+      ;;
+  esac
+  run_log_priv "Importing public key $key_location" rpm --root="$CHROOT_DIR" --import "$key_location"
+  installed_pubkey=$(rpm --root="$CHROOT_DIR" -q "gpg-pubkey-$(printf %s "$fingerprint" | tail -c 8 | tr '[A-Z]' '[a-z]')")
+  test -n "$installed_pubkey" || error "Public key verification failed (no key installed)"
+  test "$(printf '%s\n' "$installed_pubkey" | wc -l)" = "1" || error "Public key verification failed (multiple keys installed)"
+  rpm --root="$CHROOT_DIR" -qi "$installed_pubkey" | gpg -q --show-keys | grep -qi "\\<$fingerprint\\>" || error "Public key verification failed (invalid fingerprint)"
+}
+
 create() {
   echo "Creating release $RELEASE_NAME"
 
@@ -135,15 +152,7 @@ create() {
 
   run_log_priv "Setting up temporary chroot in $CHROOT_DIR" rpm --initdb --root "$CHROOT_DIR"
   poldek_install "Installing packages from $SCRIPT_DIR/base.pkgs" --pset="$SCRIPT_DIR/base.pkgs" --root="$CHROOT_DIR" --pmopt='--define=_tmppath\ /tmp'
-  if [ ! -f "$SCRIPT_DIR/jpalus.asc" ]; then
-    check_dep wget
-    run_log "Fetching public key" wget http://jpalus.fastmail.com/jpalus.asc -O "$SCRIPT_DIR/jpalus.asc"
-  fi
-  check_dep gpg gnupg2
-  if ! gpg --show-keys "$SCRIPT_DIR/jpalus.asc" | grep -iq 7D4F29DD11CB9CAEBA20E59FEA3B49141E88A192; then
-    error "Public key validation failed"
-  fi
-  run_log_priv "Importing public key" rpm --root="$CHROOT_DIR" --import "$SCRIPT_DIR/jpalus.asc"
+  import_gpg_key http://jpalus.fastmail.com/jpalus.asc $JPALUS_GPG_KEY_FINGERPRINT
   run_log_priv "Disabling default poldek repository configuration for $ARCH" sed -i -e "/^path.*=.*%{_prefix}\/PLD\/%{_arch}\/RPMS/ a auto = no\\nautoup = no" "$CHROOT_DIR/etc/poldek/repos.d/pld.conf"
   run_log_priv "Configuring custom $ARCH repository" tee "$CHROOT_DIR/etc/poldek/repos.d/jpalus.conf" <<EOF
 [source]
