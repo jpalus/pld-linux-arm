@@ -3,6 +3,7 @@
 SCRIPT_DIR=$(dirname $(readlink -f "$0"))
 
 JPALUS_GPG_KEY_FINGERPRINT=7D4F29DD11CB9CAEBA20E59FEA3B49141E88A192
+PLD_GPG_KEY_FINGERPRINT=DF1C7CA6D5C2BD81943798FAAF3F93BCE4F1BC2D
 
 EFI_PART_SIZE_MB=${EFI_PART_SIZE_MB:-128}
 FIRMWARE_PART_SIZE_MB=${FIRMWARE_PART_SIZE_MB:-128}
@@ -152,6 +153,7 @@ create() {
 
   run_log_priv "Setting up temporary chroot in $CHROOT_DIR" rpm --initdb --root "$CHROOT_DIR"
   import_gpg_key http://jpalus.fastmail.com/jpalus.asc $JPALUS_GPG_KEY_FINGERPRINT
+  import_gpg_key https://ftp.th.pld-linux.org/dists/th/PLD-3.0-Th-GPG-key.asc $PLD_GPG_KEY_FINGERPRINT
   poldek_install "Installing packages from $SCRIPT_DIR/base.pkgs" --pset="$SCRIPT_DIR/base.pkgs" --root="$CHROOT_DIR" --pmopt='--define=_tmppath\ /tmp'
   run_log_priv "Disabling default poldek repository configuration for $ARCH" sed -i -e "/^path.*=.*%{_prefix}\/PLD\/%{_arch}\/RPMS/ a auto = no\\nautoup = no" "$CHROOT_DIR/etc/poldek/repos.d/pld.conf"
   run_log_priv "Configuring custom $ARCH repository" tee "$CHROOT_DIR/etc/poldek/repos.d/jpalus.conf" <<EOF
