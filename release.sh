@@ -177,7 +177,7 @@ EOF
   rpm --root="$CHROOT_DIR" -qa|sort > "$SCRIPT_DIR/$RELEASE_NAME.packages"
   check_dep tar
   check_dep xz
-  run_log_priv "Creating archive $SCRIPT_DIR/$RELEASE_NAME.tar.xz" tar -Jcpf "$SCRIPT_DIR/$RELEASE_NAME.tar.xz" -C "$CHROOT_DIR" .
+  ls -A "$CHROOT_DIR" | run_log_priv "Creating archive $SCRIPT_DIR/$RELEASE_NAME.tar.xz" tar -Jcpf "$SCRIPT_DIR/$RELEASE_NAME.tar.xz" -C "$CHROOT_DIR" -T -
 
   if [ "$(id -u)" != "0" ]; then
     run_log_priv "Changing ownership of $RELEASE_NAME.tar.xz" chown $(id -u -n) "$SCRIPT_DIR/$RELEASE_NAME.tar.xz"
