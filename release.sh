@@ -552,6 +552,21 @@ EOF
 image_install_board_pkgs() {
 }
 
+image_setup_network() {
+  poldek_install "Installing systemd-networkd" --root "$IMAGE_MOUNT_DIR" systemd-networkd
+  if is_on "$IMAGE_WIFI_ENABLED"; then
+    poldek_install "Installing iwd wireless-regdb" --root "$IMAGE_MOUNT_DIR" iwd wireless-regdb
+  fi
+  run_log_priv "Enabling networkd link handling" rm "$IMAGE_MOUNT_DIR/etc/udev/rules.d/80-net-setup-link.rules"
+  run_log_priv "Auto-configure Ethernet devices with networkd" sh -c "cat > $IMAGE_MOUNT_DIR/etc/systemd/network/50-ether.network" <<EOF
+[Match]
+Type=ether
+
+[Network]
+DHCP=yes
+EOF
+}
+
 image_setup_params_rpi() {
   IMAGE_TYPE=rpi
   IMAGE_NAME=raspberry-pi
@@ -742,18 +757,7 @@ EOF
   fi
   poldek_install "Installing kernel" --root "$IMAGE_MOUNT_DIR" $KERNEL_PKGS
   image_dispatch image_setup_bootloader
-  poldek_install "Installing systemd-networkd" --root "$IMAGE_MOUNT_DIR" systemd-networkd
-  if is_on "$IMAGE_WIFI_ENABLED"; then
-    poldek_install "Installing iwd wireless-regdb" --root "$IMAGE_MOUNT_DIR" iwd wireless-regdb
-  fi
-  run_log_priv "Enabling networkd link handling" rm "$IMAGE_MOUNT_DIR/etc/udev/rules.d/80-net-setup-link.rules"
-  run_log_priv "Auto-configure Ethernet devices with networkd" sh -c "cat > $IMAGE_MOUNT_DIR/etc/systemd/network/50-ether.network" <<EOF
-[Match]
-Type=ether
-
-[Network]
-DHCP=yes
-EOF
+  image_dispatch image_setup_network
   run_log_priv "Cleaning up poldek cache" rm -rf "$IMAGE_MOUNT_DIR/root/.poldek-cache"
   image_unmount_fs
   run_log "Compressing image" xz "$IMAGE_PATH"
