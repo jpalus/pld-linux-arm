@@ -144,6 +144,9 @@ import_gpg_key() {
 }
 
 create() {
+  if [ -f "$SCRIPT_DIR/$RELEASE_NAME.tar.xz" ]; then
+    error "$SCRIPT_DIR/$RELEASE_NAME.tar.xz alreeady exists"
+  fi
   echo "Creating release $RELEASE_NAME"
 
   CHROOT_DIR="$(mktemp -t -d $RELEASE_NAME.XXXXXXXXXX)"
@@ -187,6 +190,9 @@ EOF
 }
 
 sign() {
+  if [ -f "$SCRIPT_DIR/$RELEASE_NAME.tar.xz.asc" ]; then
+    error "$SCRIPT_DIR/$RELEASE_NAME.tar.xz already exists"
+  fi
   if [ ! -f "$SCRIPT_DIR/$RELEASE_NAME.tar.xz" ]; then
     error "$SCRIPT_DIR/$RELEASE_NAME.tar.xz does not exist"
   fi
@@ -697,6 +703,9 @@ image_install_board_pkgs_rock5b() {
 }
 
 image_create() {
+  if [ -f "$SCRIPT_DIR/$IMAGE_NAME-$RELEASE_NAME.$IMAGE_EXT.xz" ]; then
+    error "$SCRIPT_DIR/$IMAGE_NAME-$RELEASE_NAME.$IMAGE_EXT.xz alreeady exists"
+  fi
   if [ ! -f "$SCRIPT_DIR/$RELEASE_NAME.tar.xz" ]; then
     error "$SCRIPT_DIR/$RELEASE_NAME.tar.xz does not exist"
   fi
@@ -751,6 +760,9 @@ EOF
 }
 
 image_sign() {
+  if [ -f "$SCRIPT_DIR/$IMAGE_NAME-$RELEASE_NAME.$IMAGE_EXT.xz.asc" ]; then
+    error "$SCRIPT_DIR/$IMAGE_NAME-$RELEASE_NAME.$IMAGE_EXT.xz.asc already exists"
+  fi
   if [ ! -f "$SCRIPT_DIR/$IMAGE_NAME-$RELEASE_NAME.$IMAGE_EXT.xz" ]; then
     error "$SCRIPT_DIR/$IMAGE_NAME-$RELEASE_NAME.$IMAGE_EXT.xz does not exist"
   fi
