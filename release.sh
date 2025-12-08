@@ -18,6 +18,9 @@ RELEASE_DOWNLOAD_URL="https://github.com/jpalus/pld-linux-arm/releases/download/
 BASIC_PKGS="bzip2 dhcp-client e2fsprogs gzip iproute2 less lz4 openssh-clients openssh-server ping shadow sudo systemd systemd-init tar unzip wget xz"
 IGNORE_PKGS="SysVinit,dev,vserver-packages"
 
+IMAGE_INITRD_COMMON_MODULES="fixed mmc-block pwrseq-emmc nvme scmi-module clk-scmi scmi-transport-smc cpufreq-dt xhci-plat-hcd ehci-platform ohci-platform uas sd-mod"
+IMAGE_INITRD_COMMON_MODULES_aarch64="arm-smmu-v3"
+
 RELEASE_TIMESTAMP=${RELEASE_TIMESTAMP:-$(date +%Y%m%d)}
 ARCH=${ARCH:-$(rpm -E %{_host_cpu})}
 
@@ -539,9 +542,7 @@ image_install_initrd_generator() {
 }
 
 image_setup_initrd() {
-  if [ -n "$IMAGE_INITRD_MODULES" ]; then
-    run_log_priv "Configuring additional kernel modules in initrd" sed -i "s/^#PREMODS.*/PREMODS=\"$IMAGE_INITRD_MODULES\"/" "$IMAGE_MOUNT_DIR/etc/sysconfig/geninitrd"
-  fi
+  run_log_priv "Configuring additional kernel modules in initrd" sed -i "s/^#PREMODS.*/PREMODS=\"$IMAGE_INITRD_COMMON_MODULES $(eval echo \$IMAGE_INITRD_COMMON_MODULES_$ARCH) $IMAGE_INITRD_MODULES\"/" "$IMAGE_MOUNT_DIR/etc/sysconfig/geninitrd"
   run_log_priv "Use lz4 compression for initrd" sed -i 's/^#COMPRESS.*/COMPRESS=lz4/' "$IMAGE_MOUNT_DIR/etc/sysconfig/geninitrd"
   run_log_priv "Use modprobe in initrd" tee -a "$IMAGE_MOUNT_DIR/etc/sysconfig/geninitrd" <<EOF
 USE_MODPROBE=yes
@@ -572,7 +573,7 @@ image_setup_params_rpi() {
   IMAGE_NAME=raspberry-pi
   IMAGE_DESC="Raspberry Pi"
   IMAGE_BOOT_PARAMS="console=tty1"
-  IMAGE_INITRD_MODULES="clk-raspberrypi bcm2835-dma pwm-bcm2835 i2c-bcm2835 bcm2835 mmc-block bcm2835-rng"
+  IMAGE_INITRD_MODULES="clk-raspberrypi bcm2835-dma pwm-bcm2835 i2c-bcm2835 bcm2835 bcm2835-rng"
   IMAGE_DISPLAY_ENABLED=1
   IMAGE_SOUND_ENABLED=1
   IMAGE_WIFI_ENABLED=1
@@ -649,7 +650,7 @@ image_setup_params_odroid_n2() {
   IMAGE_NAME=odroid-n2
   IMAGE_DESC="Odroid N2/N2+"
   IMAGE_BOOT_PARAMS="earlycon"
-  IMAGE_INITRD_MODULES="fixed gpio-regulator i2c-meson rtc-pcf8563 g12a pinctrl-meson-g12a reset-meson g12a-aoclk pwrseq_emmc mmc-block meson-gx-mmc"
+  IMAGE_INITRD_MODULES="gpio-regulator i2c-meson rtc-pcf8563 g12a pinctrl-meson-g12a reset-meson g12a-aoclk meson-gx-mmc"
   IMAGE_DISPLAY_ENABLED=1
   IMAGE_SOUND_ENABLED=1
 }
@@ -664,7 +665,7 @@ image_setup_params_pinebook_pro() {
   IMAGE_NAME=pinebook-pro
   IMAGE_DESC="Pinebook Pro"
   IMAGE_BOOT_PARAMS="earlycon=uart8250,mmio32,0xff1a0000 console=ttyS2,1500000n8 console=tty1"
-  IMAGE_INITRD_MODULES="8250-dw pinctrl-rockchip i2c-rk3x fixed pl330 fan53555 rk8xx-i2c rk808-regulator pwm-rockchip pwm-bl rtc-rk808 gpio-rockchip sdhci_of_arasan dw_mmc_rockchip phy_rockchip_emmc mmc_block pcie-rockchip-host phy-rockchip-pcie nvme_core nvme phy_rockchip_inno_usb2 dwc3 dwc3_of_simple phy_rockchip_typec typec-extcon fusb302 rockchipdrm panel_edp"
+  IMAGE_INITRD_MODULES="8250-dw pinctrl-rockchip i2c-rk3x pl330 fan53555 rk8xx-i2c rk808-regulator pwm-rockchip pwm-bl rtc-rk808 gpio-rockchip sdhci_of_arasan dw_mmc_rockchip phy_rockchip_emmc pcie-rockchip-host phy-rockchip-pcie phy_rockchip_inno_usb2 dwc3 dwc3_of_simple phy_rockchip_typec typec-extcon fusb302 rockchipdrm panel_edp"
   IMAGE_DISPLAY_ENABLED=1
   IMAGE_SOUND_ENABLED=1
   IMAGE_WIFI_ENABLED=1
@@ -701,7 +702,7 @@ image_setup_params_rock5b() {
   IMAGE_NAME=rock5b
   IMAGE_DESC="Radxa Rock 5B"
   IMAGE_BOOT_PARAMS="earlycon console=ttyS2,1500000n8 console=tty1"
-  IMAGE_INITRD_MODULES="8250_dw pwm_rockchip fixed rk808_regulator rk8xx_spi spi_rockchip fan53555 pinctrl_rockchip pl330 i2c_rk3x gpio_rockchip scmi_module clk-scmi scmi_transport_smc cpufreq-dt  rockchipdrm phy_rockchip_samsung_hdptx rtc_hym8563 sdhci_of_dwcmshc rockchip_saradc dw_mmc_rockchip rk805_pwrkey  xhci_plat_hcd ehci-platform ohci-platform phy_rockchip_inno_usb2 phy_rockchip_usbdp dwc3 phy_rockchip_snps_pcie3 phy_rockchip_naneng_combphy arm_smmu_v3 mmc_block uas nvme"
+  IMAGE_INITRD_MODULES="8250_dw pwm_rockchip rk808_regulator rk8xx_spi spi_rockchip fan53555 pinctrl_rockchip pl330 i2c_rk3x gpio_rockchip rockchipdrm phy_rockchip_samsung_hdptx rtc_hym8563 sdhci_of_dwcmshc rockchip_saradc dw_mmc_rockchip rk805_pwrkey phy_rockchip_inno_usb2 phy_rockchip_usbdp dwc3 phy_rockchip_snps_pcie3 phy_rockchip_naneng_combphy"
   IMAGE_DISPLAY_ENABLED=1
   IMAGE_SOUND_ENABLED=1
   FIRST_PART_OFFSET=10MiB
