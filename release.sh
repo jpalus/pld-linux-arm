@@ -15,7 +15,7 @@ DOCKER_MULTIARCH_MANIFEST="$DOCKER_REGISTRY/$DOCKER_MULTIARCH_REPO"
 DOWNLOAD_URL="https://github.com/jpalus/pld-linux-arm/releases/download"
 RELEASE_DOWNLOAD_URL="https://github.com/jpalus/pld-linux-arm/releases/download/pld-linux-arm-$RELEASE_TIMESTAMP"
 
-BASIC_PKGS="bzip2 dhcp-client e2fsprogs gzip iproute2 less lz4 openssh-clients openssh-server ping shadow sudo systemd systemd-init tar unzip wget xz"
+BASIC_PKGS="bzip2 dhcp-client e2fsprogs gzip iproute2 less lz4 openssh-clients openssh-server ping shadow sudo systemd systemd-init tar udev unzip wget xz"
 IGNORE_PKGS="SysVinit,dev,vserver-packages"
 
 IMAGE_INITRD_COMMON_MODULES="fixed mmc-block pwrseq-emmc nvme scmi-module clk-scmi scmi-transport-smc cpufreq-dt xhci-plat-hcd ehci-platform ohci-platform uas sd-mod"
