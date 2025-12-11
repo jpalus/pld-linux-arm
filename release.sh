@@ -547,6 +547,7 @@ image_setup_initrd() {
 USE_MODPROBE=yes
 EOF
   run_log_priv "Disable udev in initrd" sed -i "s/.*USE_UDEV=.*/USE_UDEV=no/" "$IMAGE_MOUNT_DIR/etc/sysconfig/geninitrd"
+  run_log_priv "Wait for block device in initrd" sed -i "s/.*WAIT_BLOCK_DEV=.*/WAIT_BLOCK_DEV=10/" "$IMAGE_MOUNT_DIR/etc/sysconfig/geninitrd"
 }
 
 image_install_board_pkgs() {
