@@ -482,7 +482,7 @@ $(_fstab_entry $IMAGE_FIRMWARE_DEVICE /boot/firmware)"
     FSTAB="$FSTAB
 $(_fstab_entry $IMAGE_EFI_DEVICE /boot/efi)"
   fi
-  run_log_priv "Setting up fstab entries" tee -a "$IMAGE_MOUNT_DIR/etc/fstab" <<EOF 
+  run_log_priv "Setting up fstab entries" tee -a "$IMAGE_MOUNT_DIR/etc/fstab" <<EOF
 $FSTAB
 EOF
 }
@@ -716,6 +716,101 @@ image_install_board_pkgs_rock5b() {
   poldek_install "Installing linux-firmware-arm linux-firmware-realtek" --root "$IMAGE_MOUNT_DIR" linux-firmware-arm linux-firmware-realtek
 }
 
+image_setup_params_turris_omnia() {
+  IMAGE_SIZE_MB=2048
+  IMAGE_TYPE=turris_omnia
+  IMAGE_NAME=turris-omnia
+  IMAGE_DESC="Turris Omnia"
+  IMAGE_BOOT_PARAMS="console=ttyS0,115200 pcie_aspm=off"
+  IMAGE_INITRD_MODULES="orion_wdt rtc-armada38x phy-armada38x-comphy sdhci_pxav3 ahci-mvebu ehci_orion"
+}
+
+image_install_board_pkgs_turris_omnia() {
+  poldek_install "Installing linux-firmware-qualcomm unbound dhcp hostapd nftables bridge-utils wireless-regdb" --root "$IMAGE_MOUNT_DIR" linux-firmware-qualcomm unbound dhcp hostapd nftables bridge-utils wireless-regdb
+}
+
+image_setup_network_turris_omnia() {
+  poldek_install "Installing systemd-networkd" --root "$IMAGE_MOUNT_DIR" systemd-networkd
+  run_log_priv "Setup bridge netdev" sh -c "cat > $IMAGE_MOUNT_DIR/etc/systemd/network/10-bridge.netdev" <<EOF
+[NetDev]
+Name=br0
+Kind=bridge
+EOF
+  run_log_priv "Setup bridge network" sh -c "cat > $IMAGE_MOUNT_DIR/etc/systemd/network/10-bridge.network" <<EOF
+[Match]
+Name=br0
+
+[Link]
+RequiredForOnline=routable
+
+[Network]
+Address=192.168.1.1/24
+EOF
+  run_log_priv "Setup switch ports network" sh -c "cat > $IMAGE_MOUNT_DIR/etc/systemd/network/10-switch-ports.network" <<EOF
+[Match]
+Name=lan[0-4]
+
+[Link]
+RequiredForOnline=no
+
+[Network]
+Bridge=br0
+EOF
+  run_log_priv "Setup WAN network" sh -c "cat > $IMAGE_MOUNT_DIR/etc/systemd/network/10-wan.network" <<EOF
+[Match]
+Name=eth2
+
+[Network]
+DHCP=yes
+EOF
+  run_log_priv "Setup DHCP server" sh -c "cat > $IMAGE_MOUNT_DIR/etc/dhcpd.conf" <<EOF
+authoritative;
+subnet 192.168.1.0 netmask 255.255.255.0 {
+  range 192.168.1.100 192.168.1.250;
+  option routers 192.168.1.1;
+  option domain-name-servers 192.168.1.1;
+}
+EOF
+  run_log_priv "Make DHCP server listen on bridge interface" sed -i 's/^\(DHCPD_INTERFACES="\)/\1br0/' $IMAGE_MOUNT_DIR/etc/sysconfig/dhcpd
+  run_log_priv "Setup basic nftables rules" sh -c "cat > $IMAGE_MOUNT_DIR/etc/sysconfig/nftables" <<EOF
+table ip filter {
+	flowtable soft_offload {
+		hook ingress priority 1; devices = { eth2, br0 };
+	}
+	chain input {
+		type filter hook input priority 0; policy drop;
+		ct state related,established accept
+		iifname lo accept
+		iifname br0 tcp dport { ssh, domain } accept
+		iifname br0 udp dport domain accept
+		iifname br0 icmp type echo-request accept
+		udp sport bootpc udp dport bootps ip saddr 0.0.0.0 ip daddr 255.255.255.255 accept
+	}
+
+	chain forward {
+		type filter hook forward priority 0; policy drop;
+		iifname br0 oifname eth2 ip protocol { tcp, udp } flow add @soft_offload
+		ct state related,established accept
+		iifname br0 oifname eth2 accept
+	}
+}
+
+table ip nat {
+	chain postrouting {
+		type nat hook postrouting priority 100; policy accept;
+		oifname eth2 masquerade
+	}
+}
+EOF
+  run_log_priv "Enable IPv4 forwarding" sed -i -e 's/\(net.ipv4.ip_forward[[:space:]]*=[[:space:]]*\)0/\11/' $IMAGE_MOUNT_DIR/etc/sysctl.conf
+  run_log_priv "Make DNS server listen on all interfaces" sed -i '/# interface: / {i\
+	interface: 0.0.0.0\n	interface: ::0
+:x ; n ; bx }' $IMAGE_MOUNT_DIR/etc/unbound/unbound.conf
+  run_log_priv "Allow all hosts to make recursive DNS queries" sed -i '/# access-control: / {i\
+	access-control: 0.0.0.0/0 allow\n	access-control: ::0/0 allow
+:x ; n ; bx }' $IMAGE_MOUNT_DIR/etc/unbound/unbound.conf
+}
+
 image_create() {
   if [ -f "$SCRIPT_DIR/$IMAGE_NAME-$RELEASE_NAME.$IMAGE_EXT.xz" ]; then
     error "$SCRIPT_DIR/$IMAGE_NAME-$RELEASE_NAME.$IMAGE_EXT.xz alreeady exists"
@@ -826,7 +921,7 @@ case "$1" in
         IMAGE_EXT=img
         IMAGE_DEVICE_TYPE=loop
         case "$3" in
-          rpi|odroid-n2|pinebook-pro|qemu|rock5b)
+          rpi|odroid-n2|pinebook-pro|qemu|rock5b|turris-omnia)
             check_args_nr 3 "$@"
             ACTION=$1-$2-$3
             eval image_setup_params_$(echo $3|tr - _)
@@ -837,7 +932,7 @@ case "$1" in
             error "Unknown image target: $3"
             ;;
         esac
-	;;
+        ;;
       *)
         ACTION=unknown
         error "Unknown image action: $2"
