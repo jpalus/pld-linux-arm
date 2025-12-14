@@ -881,6 +881,9 @@ TARBALL_URL['arm']="$RELEASE_DOWNLOAD_URL/$(release_name armv6hl).tar.xz"
 TARBALL_SHA256['arm']="$(sha256sum $SCRIPT_DIR/$(release_name armv6hl).tar.xz | cut -f1 -d' ')"
 fi
 EOF
+	git -C "$SCRIPT_DIR" reset HEAD
+	git -C "$SCRIPT_DIR" add termux-proot/pld-linux-arm.sh
+	git -C "$SCRIPT_DIR" commit -m "update termux-proot config to $RELEASE_TIMESTAMP"
 }
 
 case "$1" in
