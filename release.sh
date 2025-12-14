@@ -572,7 +572,6 @@ image_setup_params_rpi() {
   IMAGE_TYPE=rpi
   IMAGE_NAME=raspberry-pi
   IMAGE_DESC="Raspberry Pi"
-  IMAGE_BOOT_PARAMS="console=tty1"
   IMAGE_INITRD_MODULES="clk-raspberrypi bcm2835-dma pwm-bcm2835 i2c-bcm2835 bcm2835 bcm2835-rng"
   IMAGE_DISPLAY_ENABLED=1
   IMAGE_SOUND_ENABLED=1
