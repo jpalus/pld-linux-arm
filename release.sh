@@ -648,7 +648,6 @@ image_setup_params_odroid_n2() {
   IMAGE_TYPE=odroid_n2
   IMAGE_NAME=odroid-n2
   IMAGE_DESC="Odroid N2/N2+"
-  IMAGE_BOOT_PARAMS="earlycon"
   IMAGE_INITRD_MODULES="i2c-meson rtc-pcf8563 g12a reset-meson g12a-aoclk meson-gx-mmc"
   IMAGE_DISPLAY_ENABLED=1
   IMAGE_SOUND_ENABLED=1
@@ -663,7 +662,7 @@ image_setup_params_pinebook_pro() {
   IMAGE_TYPE=pbp
   IMAGE_NAME=pinebook-pro
   IMAGE_DESC="Pinebook Pro"
-  IMAGE_BOOT_PARAMS="earlycon=uart8250,mmio32,0xff1a0000 console=ttyS2,1500000n8 console=tty1"
+  IMAGE_BOOT_PARAMS="console=ttyS2,1500000n8 console=tty1"
   IMAGE_INITRD_MODULES="i2c-rk3x pl330 fan53555 rk8xx-i2c rk808-regulator pwm-rockchip pwm-bl rtc-rk808 gpio-rockchip sdhci_of_arasan dw_mmc_rockchip phy_rockchip_emmc pcie-rockchip-host phy-rockchip-pcie phy_rockchip_inno_usb2 dwc3 dwc3_of_simple phy_rockchip_typec fusb302 rockchipdrm panel_edp"
   IMAGE_DISPLAY_ENABLED=1
   IMAGE_SOUND_ENABLED=1
@@ -700,7 +699,7 @@ image_setup_params_rock5b() {
   IMAGE_TYPE=rock5b
   IMAGE_NAME=rock5b
   IMAGE_DESC="Radxa Rock 5B"
-  IMAGE_BOOT_PARAMS="earlycon console=ttyS2,1500000n8 console=tty1"
+  IMAGE_BOOT_PARAMS="console=ttyS2,1500000n8 console=tty1"
   IMAGE_INITRD_MODULES="pwm_rockchip rk808_regulator rk8xx_spi spi_rockchip fan53555 pl330 i2c_rk3x gpio_rockchip rockchipdrm phy_rockchip_samsung_hdptx rtc_hym8563 sdhci_of_dwcmshc rockchip_saradc dw_mmc_rockchip rk805_pwrkey phy_rockchip_inno_usb2 phy_rockchip_usbdp dwc3 phy_rockchip_snps_pcie3 phy_rockchip_naneng_combphy"
   IMAGE_DISPLAY_ENABLED=1
   IMAGE_SOUND_ENABLED=1
