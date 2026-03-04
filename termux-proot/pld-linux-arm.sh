@@ -1,10 +1,10 @@
 DISTRO_NAME="PLD Linux Distribution"
-TARBALL_URL['aarch64']="https://github.com/jpalus/pld-linux-arm/releases/download/pld-linux-arm-/pld-linux-base-aarch64-20251215.tar.xz"
-TARBALL_SHA256['aarch64']="9d86e822619fa5a8111b4823ab9f97b9caef7f5c670669cf4d9fb8d6e7922887"
+TARBALL_URL['aarch64']="https://github.com/jpalus/pld-linux-arm/releases/download/pld-linux-arm-/pld-linux-base-aarch64-20260304.tar.xz"
+TARBALL_SHA256['aarch64']="be6fcb200d95d3e6758a84658ed448ab3ed238d904d4cb2c6397b541d3bcaa5c"
 if uname -m | grep -q armv7 && test -e /proc/cpuinfo && grep -q neon /proc/cpuinfo; then
-TARBALL_URL['arm']="https://github.com/jpalus/pld-linux-arm/releases/download/pld-linux-arm-/pld-linux-base-armv7hnl-20251215.tar.xz"
-TARBALL_SHA256['arm']="f2252ffa746785fcae540be846279b967dca50b4e517289cee87db29488a96a6"
+TARBALL_URL['arm']="https://github.com/jpalus/pld-linux-arm/releases/download/pld-linux-arm-/pld-linux-base-armv7hnl-20260304.tar.xz"
+TARBALL_SHA256['arm']="81f1b610754870ca6be4dcddf8cff4bfac665046b0266cc5a8d868dc329a7fcd"
 else
-TARBALL_URL['arm']="https://github.com/jpalus/pld-linux-arm/releases/download/pld-linux-arm-/pld-linux-base-armv6hl-20251215.tar.xz"
-TARBALL_SHA256['arm']="4e6a76173b528e66ddab6538e673291d895b7d627b134e9b1509f806d40a897d"
+TARBALL_URL['arm']="https://github.com/jpalus/pld-linux-arm/releases/download/pld-linux-arm-/pld-linux-base-armv6hl-20260304.tar.xz"
+TARBALL_SHA256['arm']="a460b5645fa0f818669d5ad922aefe8d4fbbaff4f4dfc70f2957a2c77ad1306e"
 fi
