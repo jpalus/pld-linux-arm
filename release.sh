@@ -250,8 +250,8 @@ publish_dockerhub_multiarch() {
 publish_github() {
   if [ -n "$1" ]; then
     RELEASE_NOTES_FILE="$1"
-  elif [ -f "release-notes-$RELEASE_TIMESTAMP" ]; then
-    RELEASE_NOTES_FILE="release-notes-$RELEASE_TIMESTAMP"
+  elif [ -f "$SCRIPT_DIR/release-notes-$RELEASE_TIMESTAMP" ]; then
+    RELEASE_NOTES_FILE="$SCRIPT_DIR/release-notes-$RELEASE_TIMESTAMP"
   fi
   run_log "Publishing release to GitHub" gh release create -d -t pld-linux-arm-$RELEASE_TIMESTAMP ${RELEASE_NOTES_FILE:+-F $RELEASE_NOTES_FILE} pld-linux-arm-$RELEASE_TIMESTAMP $(find $SCRIPT_DIR -name "*$RELEASE_TIMESTAMP*xz" -o -name "*$RELEASE_TIMESTAMP*asc" -o -name "*$RELEASE_TIMESTAMP*packages")
 }
