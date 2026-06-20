@@ -886,6 +886,30 @@ EOF
 	git -C "$SCRIPT_DIR" commit -m "update termux-proot config to $RELEASE_TIMESTAMP"
 }
 
+release_all() {
+  local all_archs="aarch64 armv6hl armv7hnl"
+  set -e
+  for arch in $all_archs; do
+    ARCH=$arch $0 -c create
+    ARCH=$arch $0 sign
+    ARCH=$arch $0 image create qemu
+    ARCH=$arch $0 image sign qemu
+    ARCH=$arch $0 image create rpi
+    ARCH=$arch $0 image sign rpi
+  done
+  for plat in odroid-n2 pinebook-pro rock5b; do
+    ARCH=aarch64 $0 image create $plat
+    ARCH=aarch64 $0 image sign $plat
+  done
+  for plat in turris-omnia; do
+    ARCH=armv7hnl $0 image create $plat
+    ARCH=armv7hnl $0 image sign $plat
+  done
+  $0 update termux-proot
+  $0 publish dockerhub-multiarch
+  $0 publish github
+}
+
 case "$1" in
   -c)
     shift
@@ -952,6 +976,9 @@ case "$1" in
         error "Unknown update action: $2"
         ;;
     esac
+    ;;
+  all)
+    release_all
     ;;
   *)
     ACTION=unknown
