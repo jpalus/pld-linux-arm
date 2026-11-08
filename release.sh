@@ -18,7 +18,7 @@ RELEASE_DOWNLOAD_URL="https://github.com/jpalus/pld-linux-arm/releases/download/
 BASIC_PKGS="bzip2 dhcp-client e2fsprogs gzip iproute2 less lz4 openssh-clients openssh-server ping shadow sudo systemd systemd-init tar udev unzip wget xz"
 IGNORE_PKGS="SysVinit,dev,vserver-packages"
 
-IMAGE_INITRD_COMMON_MODULES="mmc-block pwrseq-emmc nvme clk-scmi scmi-transport-smc cpufreq-dt xhci-plat-hcd ehci-platform ohci-platform uas sd-mod"
+IMAGE_INITRD_COMMON_MODULES="mmc-block pwrseq-emmc nvme scmi-clk scmi-transport-smc cpufreq-dt xhci-plat-hcd ehci-platform ohci-platform uas sd-mod"
 
 RELEASE_TIMESTAMP=${RELEASE_TIMESTAMP:-$(date +%Y%m%d)}
 ARCH=${ARCH:-$(rpm -E %{_host_cpu})}
